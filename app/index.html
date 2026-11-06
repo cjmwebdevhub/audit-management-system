@@ -7,6 +7,17 @@
   <link rel="icon" type="image/jpeg" href="src/assets/logo.jpeg">
   <link rel="stylesheet" href="src/styles.css">
   <link rel="stylesheet" href="src/auth/login.css">
+  <!-- Hide auth screen immediately if session exists — prevents flash on reload -->
+  <script>
+    try {
+      if (localStorage.getItem('ams_session')) {
+        document.documentElement.style.setProperty('--auth-display', 'none');
+      }
+    } catch(_) {}
+  </script>
+  <style>
+    #auth-screen { display: var(--auth-display, flex); }
+  </style>
 </head>
 <body>
 
