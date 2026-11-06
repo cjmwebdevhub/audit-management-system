@@ -1,27 +1,47 @@
 /**
  * app/src/data/db.js
  * ──────────────────────────────────────────────────────────────
- * In-memory data store (simulates DynamoDB collections).
- * In production this is replaced by api/src/lib/dynamodb.js
- * hitting the real amsdata DynamoDB table.
+ * In-memory data store backed by Supabase.
+ * Every mutation is synced to Supabase so data is shared across
+ * all browsers and devices in real time.
  *
- * Collections mirror the single-table design defined in the
- * Workflow document:
- *   auditables  — Audit Universe (ENT-###)
- *   audits      — Engagements    (AUD-YYYY-NNN)
+ * Collections:
+ *   auditables  — Audit Universe  (ENT-###)
+ *   audits      — Engagements     (AUD-YYYY-NNN)
  *   notes       — Working Notes & Findings
  *   docreqs     — Document Requests
  *   issues      — Remediation Tracking
- *   trail       — Tamper-Proof Audit Trail
- *   data/iam    — Users & Roles
+ *   trail       — Audit Trail
+ *   users       — IAM / Users & Roles
  * ──────────────────────────────────────────────────────────────
  */
 
+// ── Supabase config ───────────────────────────────────────────
+const SUPA_URL = 'https://lhypdkxdflgegfusezjg.supabase.co';
+const SUPA_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxoeXBka3hkZmxnZWdmdXNlempnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTM5MzI2MTEsImV4cCI6MjEwOTUwODYxMX0.WzNlaNHQV7E0SkoBsyFzTV4dms-OcKNH8moMNmVDtBk';
+
+const SUPA_HEADERS = {
+  'apikey':        SUPA_KEY,
+  'Authorization': 'Bearer ' + SUPA_KEY,
+  'Content-Type':  'application/json',
+  'Prefer':        'resolution=merge-duplicates',
+};
+
+// Table name map
+const SUPA_TABLES = {
+  auditables: 'ams_auditables',
+  audits:     'ams_audits',
+  notes:      'ams_notes',
+  docreqs:    'ams_docreqs',
+  issues:     'ams_issues',
+  trail:      'ams_trail',
+  users:      'ams_users',
+};
+
+// ── In-memory store ───────────────────────────────────────────
 const DB = {
-  // ── Active session user ────────────────────────────────────
   currentUser: null,
 
-  // ── Role definitions ───────────────────────────────────────
   roles: [
     { id: 'cae',       label: 'Chief Audit Executive' },
     { id: 'manager',   label: 'Audit Manager' },
@@ -35,7 +55,6 @@ const DB = {
     { id: 'admin',     label: 'System Administrator' },
   ],
 
-  // ── Empty collections — ready for testers to fill ─────────
   users:      [],
   auditables: [],
   audits:     [],
@@ -45,57 +64,127 @@ const DB = {
   trail:      [],
 };
 
-// ============================================================
-// LOCALSTORAGE PERSISTENCE
-// ============================================================
-// All audit data is saved to localStorage on every mutation
-// so it survives page refreshes and browser restarts.
-//
-// Key:   ams_data
-// Reset: call DB.reset() from the browser console, or use
-//        the "Reset to Sample Data" button in the sidebar.
-// ============================================================
+// ── Supabase helpers ──────────────────────────────────────────
 
-const DB_STORAGE_KEY = 'ams_data';
+/** Fetch all rows from a table and return as plain JS objects. */
+async function _supaFetch(collection) {
+  const table = SUPA_TABLES[collection];
+  const res = await fetch(`${SUPA_URL}/rest/v1/${table}?select=sk,data&order=sk`, {
+    headers: SUPA_HEADERS,
+  });
+  if (!res.ok) throw new Error(`Supabase fetch ${table}: ${res.status}`);
+  const rows = await res.json();
+  // Each row is { sk, data } — unwrap data and inject sk
+  return rows.map(r => ({ ...r.data, sk: r.sk }));
+}
 
-/** Persist the mutable collections to localStorage. */
-function dbSave() {
-  try {
-    const payload = {
-      auditables: DB.auditables,
-      audits:     DB.audits,
-      notes:      DB.notes,
-      docreqs:    DB.docreqs,
-      issues:     DB.issues,
-      trail:      DB.trail,
-      users:      DB.users,
-    };
-    localStorage.setItem(DB_STORAGE_KEY, JSON.stringify(payload));
-  } catch (e) {
-    console.warn('AMS: localStorage write failed', e);
+/** Upsert a single item (insert or update by sk). */
+async function _supaUpsert(collection, item) {
+  const table = SUPA_TABLES[collection];
+  const res = await fetch(`${SUPA_URL}/rest/v1/${table}`, {
+    method:  'POST',
+    headers: SUPA_HEADERS,
+    body:    JSON.stringify({ sk: item.sk, data: item }),
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(`Supabase upsert ${table}: ${res.status} — ${err}`);
   }
 }
 
-/** Reload collections from localStorage (called once on boot). */
-function dbLoad() {
+/** Delete a single item by sk. */
+async function _supaDelete(collection, sk) {
+  const table = SUPA_TABLES[collection];
+  const res = await fetch(
+    `${SUPA_URL}/rest/v1/${table}?sk=eq.${encodeURIComponent(sk)}`,
+    { method: 'DELETE', headers: SUPA_HEADERS }
+  );
+  if (!res.ok) throw new Error(`Supabase delete ${table}: ${res.status}`);
+}
+
+// ── Public API ────────────────────────────────────────────────
+
+/**
+ * Load all collections from Supabase into the in-memory DB.
+ * Called once on app boot. Returns a Promise.
+ */
+async function dbLoad() {
   try {
-    const raw = localStorage.getItem(DB_STORAGE_KEY);
-    if (!raw) return false;
-    const saved = JSON.parse(raw);
-    // Only restore collections that exist in the saved payload
-    const keys = ['auditables','audits','notes','docreqs','issues','trail','users'];
-    keys.forEach(k => { if (saved[k]) DB[k] = saved[k]; });
+    const collections = Object.keys(SUPA_TABLES);
+    const results = await Promise.all(collections.map(c => _supaFetch(c)));
+    collections.forEach((c, i) => { DB[c] = results[i]; });
     return true;
   } catch (e) {
-    console.warn('AMS: localStorage read failed — using seed data', e);
+    console.error('AMS: Supabase load failed', e);
+    toast('Could not load data from server. Check your connection.', 'error');
     return false;
   }
 }
 
-/** Wipe localStorage and reload the page to restore seed data. */
-function dbReset() {
-  if (!confirm('Reset ALL data to the original sample data? This cannot be undone.')) return;
-  localStorage.removeItem(DB_STORAGE_KEY);
-  location.reload();
+/**
+ * Save (upsert) every item in a collection that was touched.
+ * Components call dbSave() after any mutation — we diff against
+ * Supabase by upserting the entire in-memory collection.
+ * This is simple and correct for a demo-scale app.
+ */
+async function dbSave() {
+  try {
+    const collections = Object.keys(SUPA_TABLES);
+    for (const c of collections) {
+      for (const item of DB[c]) {
+        await _supaUpsert(c, item);
+      }
+    }
+  } catch (e) {
+    console.error('AMS: Supabase save failed', e);
+    toast('Save failed — check your connection.', 'error');
+  }
 }
 
+/**
+ * Save a single item immediately (faster than full dbSave).
+ * Use this after adding or editing one record.
+ */
+async function dbSaveItem(collection, item) {
+  try {
+    await _supaUpsert(collection, item);
+  } catch (e) {
+    console.error('AMS: Supabase saveItem failed', e);
+    toast('Save failed — check your connection.', 'error');
+  }
+}
+
+/**
+ * Delete a single item from Supabase and remove from in-memory DB.
+ */
+async function dbDeleteItem(collection, sk) {
+  try {
+    DB[collection] = DB[collection].filter(i => i.sk !== sk);
+    await _supaDelete(collection, sk);
+  } catch (e) {
+    console.error('AMS: Supabase delete failed', e);
+    toast('Delete failed — check your connection.', 'error');
+  }
+}
+
+/**
+ * Wipe all data from Supabase and reload.
+ */
+async function dbReset() {
+  if (!confirm('Reset ALL data? This will permanently delete everything from the server.')) return;
+  try {
+    const collections = Object.keys(SUPA_TABLES);
+    for (const c of collections) {
+      const table = SUPA_TABLES[c];
+      await fetch(`${SUPA_URL}/rest/v1/${table}?sk=neq.`, {
+        method: 'DELETE', headers: SUPA_HEADERS,
+      });
+      DB[c] = [];
+    }
+    toast('All data cleared.', 'info');
+    navigate('dashboard');
+  } catch (e) {
+    console.error('AMS: Supabase reset failed', e);
+    toast('Reset failed — check your connection.', 'error');
+  }
+}

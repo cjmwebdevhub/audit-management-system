@@ -134,11 +134,16 @@ function _bootApp() {
 }
 
 // ── DOMContentLoaded ──────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
   _bindEnterKey();
 
-  // Load persisted data from localStorage (falls back to seed data silently)
-  dbLoad();
+  // Show a loading indicator while Supabase data is fetched
+  document.getElementById('main-content') &&
+    (document.getElementById('main-content').innerHTML =
+      '<div style="padding:40px;text-align:center;color:#9a3412;">Loading data…</div>');
+
+  // Load all data from Supabase before booting the app
+  await dbLoad();
 
   // If a valid session already exists (same browser tab), skip the login screen
   const session = getSession();

@@ -124,7 +124,8 @@ function modal(title, bodyHtml, footerHtml = '', sizeCls = '') {
 /** Remove the active modal from the DOM and persist any mutations. */
 function closeModal() {
   document.getElementById('modal-root').innerHTML = '';
-  dbSave();
+  // dbSave is now async — fire and forget (components use dbSaveItem for precise saves)
+  dbSave().catch(e => console.warn('closeModal dbSave:', e));
 }
 
 /**
