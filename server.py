@@ -17,11 +17,9 @@ import http.server
 import socketserver
 import os
 import sys
-import webbrowser
-import threading
 
 # ── Config ────────────────────────────────────────────────────
-PORT     = int(sys.argv[1]) if len(sys.argv) > 1 else 8080
+PORT     = int(sys.argv[1]) if len(sys.argv) > 1 else int(os.environ.get("PORT", 8080))
 APP_DIR  = os.path.join(os.path.dirname(os.path.abspath(__file__)), "app")
 
 # ── Custom handler ────────────────────────────────────────────
@@ -69,14 +67,6 @@ def main():
         print(f"  │  Press Ctrl+C to stop                       │")
         print("  └─────────────────────────────────────────────┘")
         print()
-
-        # Open browser automatically after a short delay
-        def open_browser():
-            import time
-            time.sleep(0.5)
-            webbrowser.open(url)
-
-        threading.Thread(target=open_browser, daemon=True).start()
 
         try:
             httpd.serve_forever()
