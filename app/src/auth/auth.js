@@ -35,8 +35,8 @@ function _getAccounts() {
   if (!accounts) {
     // Seed built-in accounts on first run
     accounts = {
-      admin: { username: 'admin', password: 'admin123', role: 'admin',  fullName: 'System Administrator', email: 'admin@ams.local' },
-      user:  { username: 'user',  password: 'user123',  role: 'user',   fullName: 'Viewer Account',        email: 'user@ams.local'  },
+      admin: { username: 'admin', password: 'admin123', role: 'admin', fullName: 'System Administrator', email: 'admin@ams.local' },
+      user:  { username: 'user',  password: 'user123',  role: 'admin', fullName: 'Tester Account',       email: 'user@ams.local'  },
     };
     _saveAccounts(accounts);
   }
