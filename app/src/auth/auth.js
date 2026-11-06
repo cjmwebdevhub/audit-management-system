@@ -49,18 +49,18 @@ const SESSION_KEY = 'ams_session';
 /** @returns {{ username, role, fullName, email } | null} */
 function getSession() {
   try {
-    const raw = sessionStorage.getItem(SESSION_KEY);
+    const raw = localStorage.getItem(SESSION_KEY);
     return raw ? JSON.parse(raw) : null;
   } catch (_) { return null; }
 }
 
 function _setSession(account) {
   const { username, role, fullName, email } = account;
-  sessionStorage.setItem(SESSION_KEY, JSON.stringify({ username, role, fullName, email }));
+  localStorage.setItem(SESSION_KEY, JSON.stringify({ username, role, fullName, email }));
 }
 
 function clearSession() {
-  sessionStorage.removeItem(SESSION_KEY);
+  localStorage.removeItem(SESSION_KEY);
 }
 
 // ── Role guard ────────────────────────────────────────────────
