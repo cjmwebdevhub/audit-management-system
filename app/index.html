@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Audit Management System</title>
+  <link rel="icon" type="image/jpeg" href="src/assets/logo.jpeg">
+  <link rel="stylesheet" href="src/styles.css">
+  <link rel="stylesheet" href="src/auth/login.css">
+</head>
+<body>
+
+<div id="toast-container"></div>
+
+<!-- MODAL CONTAINER -->
+<div id="modal-root"></div>
+
+<!-- ═══════════════════════════════════════════════════════════
+     AUTH SCREEN  (shown before the app loads)
+     ═══════════════════════════════════════════════════════════ -->
+<div id="auth-screen">
+
+  <!-- LEFT: branding / hero -->
+  <div class="auth-hero">
+    <div class="auth-hero-inner">
+      <div class="auth-brand">
+        <img src="src/assets/logo.jpeg" alt="AMS Logo" class="auth-brand-logo">
+        <span class="auth-brand-name">AMS</span>
+      </div>
+      <h2 class="auth-hero-title">Audit Management<br>System</h2>
+      <p class="auth-hero-sub">
+        Your end-to-end platform for planning, executing,<br>
+        and tracking internal audits with confidence.
+      </p>
+      <div class="auth-hero-pills">
+        <span class="auth-pill">📋 Audit Planning</span>
+        <span class="auth-pill">🔬 Fieldwork</span>
+        <span class="auth-pill">📊 Reporting</span>
+        <span class="auth-pill">✅ Remediation</span>
+      </div>
+    </div>
+    <!-- decorative swirl blobs -->
+    <div class="auth-blob auth-blob-1"></div>
+    <div class="auth-blob auth-blob-2"></div>
+    <div class="auth-blob auth-blob-3"></div>
+  </div>
+
+  <!-- RIGHT: card -->
+  <div class="auth-card">
+
+    <!-- Header -->
+    <div class="auth-header">
+      <span class="auth-logo">
+        <img src="src/assets/logo.jpeg" alt="AMS" style="width:80px;height:80px;border-radius:0;object-fit:contain;mix-blend-mode:multiply;background:transparent;">
+      </span>
+      <h1>Welcome Back</h1>
+      <p>Sign in to access your workspace</p>
+    </div>
+
+    <!-- Tab switcher -->
+    <div class="auth-tabs">
+      <button class="auth-tab active" id="tab-login"    onclick="authShowTab('login')">Sign In</button>
+      <button class="auth-tab"        id="tab-register" onclick="authShowTab('register')">Register</button>
+    </div>
+
+    <!-- Scrollable panels wrapper -->
+    <div class="auth-panels-wrap">
+
+    <!-- ── LOGIN PANEL ── -->
+    <div class="auth-panel active" id="panel-login">
+      <div class="auth-error"   id="login-error"></div>
+      <div class="auth-success" id="login-success"></div>
+
+      <div class="auth-field">
+        <label>Username</label>
+        <div class="auth-input-wrap">
+          <span class="auth-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </span>
+          <input class="auth-input" type="text" id="login-username" placeholder="Enter your username" autocomplete="username">
+        </div>
+      </div>
+
+      <div class="auth-field">
+        <label>Password</label>
+        <div class="auth-input-wrap">
+          <span class="auth-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </span>
+          <input class="auth-input" type="password" id="login-password" placeholder="Enter your password" autocomplete="current-password">
+          <button type="button" class="pw-toggle" onclick="togglePw('login-password', this)" tabindex="-1" aria-label="Show password">
+            <svg class="eye-show" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            <svg class="eye-hide" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <button class="auth-btn" onclick="authDoLogin()">Sign In &rarr;</button>
+
+      <div class="auth-hint">
+        <strong>Demo accounts</strong><br>
+        <code>admin</code> / <code>admin123</code>
+        <span class="role-badge admin">admin</span>
+        &nbsp;·&nbsp;
+        <code>user</code> / <code>user123</code>
+        <span class="role-badge user">view only</span>
+      </div>
+    </div>
+
+    <!-- ── REGISTER PANEL ── -->
+    <div class="auth-panel" id="panel-register">
+      <div class="auth-error"   id="reg-error"></div>
+      <div class="auth-success" id="reg-success"></div>
+
+      <div class="auth-field">
+        <label>Full Name</label>
+        <div class="auth-input-wrap">
+          <span class="auth-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </span>
+          <input class="auth-input" type="text" id="reg-name" placeholder="e.g. Juan dela Cruz">
+        </div>
+      </div>
+
+      <div class="auth-field">
+        <label>Email</label>
+        <div class="auth-input-wrap">
+          <span class="auth-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+          </span>
+          <input class="auth-input" type="email" id="reg-email" placeholder="you@company.com" autocomplete="email">
+        </div>
+      </div>
+
+      <div class="auth-field">
+        <label>Username</label>
+        <div class="auth-input-wrap">
+          <span class="auth-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+          </span>
+          <input class="auth-input" type="text" id="reg-username" placeholder="3–20 chars, letters/numbers/_" autocomplete="username">
+        </div>
+      </div>
+
+      <div class="auth-field">
+        <label>Password</label>
+        <div class="auth-input-wrap">
+          <span class="auth-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </span>
+          <input class="auth-input" type="password" id="reg-password" placeholder="At least 6 characters" autocomplete="new-password">
+          <button type="button" class="pw-toggle" onclick="togglePw('reg-password', this)" tabindex="-1" aria-label="Show password">
+            <svg class="eye-show" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            <svg class="eye-hide" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="auth-field">
+        <label>Confirm Password</label>
+        <div class="auth-input-wrap">
+          <span class="auth-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </span>
+          <input class="auth-input" type="password" id="reg-confirm" placeholder="Repeat password" autocomplete="new-password">
+          <button type="button" class="pw-toggle" onclick="togglePw('reg-confirm', this)" tabindex="-1" aria-label="Show password">
+            <svg class="eye-show" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            <svg class="eye-hide" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16" style="display:none"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <button class="auth-btn" onclick="authDoRegister()">Create Account &rarr;</button>
+
+      <div class="auth-hint">
+        New accounts are granted <strong>view-only</strong> access.<br>
+        Contact an admin to request write access.
+      </div>
+    </div>
+
+    </div><!-- /.auth-panels-wrap -->
+  </div><!-- /.auth-card -->
+</div><!-- /#auth-screen -->
+
+<div class="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <img src="src/assets/logo.jpeg" alt="AMS Logo" class="sidebar-logo-img">
+      <div class="sidebar-header-text">
+        <h1>AMS</h1>
+        <p>Audit Management System</p>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Dashboard</div>
+      <div class="nav-item active" onclick="navigate('dashboard')" id="nav-dashboard">
+        <span class="icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg></span> Dashboard
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Planning</div>
+      <div class="nav-item" onclick="navigate('universe')" id="nav-universe">
+        <span class="icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg></span> Audit Universe
+      </div>
+      <div class="nav-item" onclick="navigate('plan')" id="nav-plan">
+        <span class="icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></span> Annual Plan
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Execution</div>
+      <div class="nav-item" onclick="navigate('engagements')" id="nav-engagements">
+        <span class="icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></span> Engagements
+      </div>
+      <div class="nav-item" onclick="navigate('fieldwork')" id="nav-fieldwork">
+        <span class="icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M9 3H5a2 2 0 0 0-2 2v4m6-6h10a2 2 0 0 1 2 2v4M9 3v11m0 0H5a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-3a2 2 0 0 0-2-2h-4m-5 0h4"/></svg></span> Fieldwork
+      </div>
+      <div class="nav-item" onclick="navigate('docreqs')" id="nav-docreqs">
+        <span class="icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/><line x1="12" y1="11" x2="12" y2="17"/><line x1="9" y1="14" x2="15" y2="14"/></svg></span> Document Requests
+        <span class="nav-badge" id="badge-docreqs">3</span>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Reporting</div>
+      <div class="nav-item" onclick="navigate('reporting')" id="nav-reporting">
+        <span class="icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span> Reports
+      </div>
+      <div class="nav-item" onclick="navigate('issues')" id="nav-issues">
+        <span class="icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span> Issues &amp; Remediation
+        <span class="nav-badge" id="badge-issues">7</span>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Administration</div>
+      <div class="nav-item" onclick="navigate('iam')" id="nav-iam">
+        <span class="icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span> Users &amp; Roles
+      </div>
+      <div class="nav-item" onclick="navigate('trail')" id="nav-trail">
+        <span class="icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="16" height="16"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span> Audit Trail
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="user-chip" onclick="navigate('iam')">
+        <div class="user-avatar" id="user-avatar">CA</div>
+        <div class="user-info">
+          <div class="user-name" id="user-name">Chief Auditor</div>
+          <div class="user-role" id="user-role">Chief Audit Executive</div>
+        </div>
+      </div>
+      <button id="logout-btn" onclick="authLogout()" style="margin-top:12px;width:100%;display:flex;align-items:center;justify-content:center;gap:6px;padding:8px 12px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);border-radius:8px;color:rgba(255,255,255,0.8);font-size:12px;font-weight:600;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.background='rgba(255,255,255,0.15)'" onmouseout="this.style.background='rgba(255,255,255,0.08)'">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Sign Out
+      </button>
+      <button onclick="dbReset()" style="margin-top:6px;width:100%;padding:5px;background:transparent;border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:rgba(255,255,255,0.35);font-size:11px;cursor:pointer;transition:all 0.15s;" onmouseover="this.style.color='rgba(255,255,255,0.65)'" onmouseout="this.style.color='rgba(255,255,255,0.35)'">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="12" height="12" style="vertical-align:-2px;margin-right:3px"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>Reset Sample Data
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="topbar">
+      <h2 id="page-title">Dashboard</h2>
+      <div class="topbar-actions" id="topbar-actions">
+        <div id="readonly-banner"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="14" height="14" style="vertical-align:-2px;margin-right:4px"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>View-only mode</div>
+      </div>
+    </div>
+    <div class="content" id="main-content">
+      <!-- Dynamic content rendered here -->
+    </div>
+  </main>
+</div>
+
+<!-- Auth module must load before everything else -->
+<script src="src/auth/auth.js"></script>
+
+<!-- Application modules loaded in dependency order -->
+<script src="src/data/db.js"></script>
+<script src="src/utils/helpers.js"></script>
+<script src="src/utils/navigation.js"></script>
+<script src="src/components/dashboard.js"></script>
+<script src="src/components/universe.js"></script>
+<script src="src/components/plan.js"></script>
+<script src="src/components/engagements.js"></script>
+<script src="src/components/fieldwork.js"></script>
+<script src="src/components/docreqs.js"></script>
+<script src="src/components/reporting.js"></script>
+<script src="src/components/issues.js"></script>
+<script src="src/components/iam.js"></script>
+<script src="src/components/trail.js"></script>
+<script src="src/main.js"></script>
+<script>
+function togglePw(inputId, btn) {
+  var input = document.getElementById(inputId);
+  var isHidden = input.type === 'password';
+  input.type = isHidden ? 'text' : 'password';
+  btn.querySelector('.eye-show').style.display = isHidden ? 'none'  : '';
+  btn.querySelector('.eye-hide').style.display = isHidden ? ''      : 'none';
+  btn.setAttribute('aria-label', isHidden ? 'Hide password' : 'Show password');
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,2008 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Audit Management System</title>
+<style>
+  :root {
+    --bg: #f4f6f9;
+    --surface: #ffffff;
+    --border: #e2e8f0;
+    --primary: #1e40af;
+    --primary-light: #3b82f6;
+    --primary-dark: #1e3a8a;
+    --accent: #0ea5e9;
+    --text: #0f172a;
+    --muted: #64748b;
+    --success: #16a34a;
+    --warning: #d97706;
+    --danger: #dc2626;
+    --info: #0891b2;
+    --radius: 8px;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.04);
+    --shadow-md: 0 4px 6px rgba(0,0,0,0.07), 0 2px 4px rgba(0,0,0,0.05);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, "Segoe UI", system-ui, sans-serif; font-size: 14px; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+  /* Layout */
+  .app { display: flex; height: 100vh; overflow: hidden; }
+  .sidebar { width: 240px; background: var(--primary-dark); color: #fff; display: flex; flex-direction: column; flex-shrink: 0; overflow-y: auto; }
+  .sidebar-header { padding: 20px 16px 16px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+  .sidebar-header h1 { font-size: 15px; font-weight: 700; letter-spacing: 0.3px; }
+  .sidebar-header p { font-size: 11px; color: rgba(255,255,255,0.5); margin-top: 3px; }
+  .sidebar-section { padding: 12px 0; }
+  .sidebar-section-label { font-size: 10px; font-weight: 600; letter-spacing: 0.8px; text-transform: uppercase; color: rgba(255,255,255,0.4); padding: 0 16px 6px; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 16px; cursor: pointer; font-size: 13px; color: rgba(255,255,255,0.75); transition: all 0.15s; border-left: 3px solid transparent; }
+  .nav-item:hover { background: rgba(255,255,255,0.06); color: #fff; }
+  .nav-item.active { background: rgba(255,255,255,0.12); color: #fff; border-left-color: #60a5fa; font-weight: 600; }
+  .nav-item .icon { font-size: 16px; width: 20px; text-align: center; }
+  .nav-badge { margin-left: auto; background: #ef4444; color: #fff; font-size: 10px; font-weight: 700; padding: 1px 6px; border-radius: 10px; }
+  .sidebar-footer { margin-top: auto; padding: 16px; border-top: 1px solid rgba(255,255,255,0.1); }
+  .user-chip { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+  .user-avatar { width: 32px; height: 32px; border-radius: 50%; background: var(--primary-light); display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; color: #fff; flex-shrink: 0; }
+  .user-info { flex: 1; min-width: 0; }
+  .user-name { font-size: 13px; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .user-role { font-size: 11px; color: rgba(255,255,255,0.5); }
+
+  /* Main */
+  .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+  .topbar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 24px; height: 56px; display: flex; align-items: center; gap: 16px; flex-shrink: 0; box-shadow: var(--shadow); }
+  .topbar h2 { font-size: 16px; font-weight: 700; }
+  .topbar-actions { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+  .content { flex: 1; overflow-y: auto; padding: 24px; }
+
+  /* Cards */
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); }
+  .card-header { padding: 16px 20px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+  .card-title { font-size: 14px; font-weight: 700; }
+  .card-body { padding: 20px; }
+
+  /* Buttons */
+  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid transparent; transition: all 0.15s; line-height: 1.4; }
+  .btn-primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .btn-primary:hover { background: var(--primary-dark); }
+  .btn-secondary { background: var(--surface); color: var(--text); border-color: var(--border); }
+  .btn-secondary:hover { background: var(--bg); }
+  .btn-success { background: var(--success); color: #fff; }
+  .btn-danger { background: var(--danger); color: #fff; }
+  .btn-warning { background: var(--warning); color: #fff; }
+  .btn-info { background: var(--info); color: #fff; }
+  .btn-sm { padding: 4px 10px; font-size: 12px; }
+  .btn-xs { padding: 2px 8px; font-size: 11px; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  /* Tables */
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th { background: var(--bg); font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); padding: 9px 12px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  td { padding: 10px 12px; border-bottom: 1px solid var(--border); font-size: 13px; vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #f8fafc; }
+
+  /* Badges */
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; white-space: nowrap; }
+  .badge-critical { background: #fef2f2; color: #dc2626; }
+  .badge-high { background: #fff7ed; color: #ea580c; }
+  .badge-medium { background: #fffbeb; color: #ca8a04; }
+  .badge-low { background: #f0fdf4; color: #16a34a; }
+  .badge-planned { background: #eff6ff; color: #2563eb; }
+  .badge-scheduled { background: #f0f9ff; color: #0369a1; }
+  .badge-in-progress { background: #faf5ff; color: #7c3aed; }
+  .badge-reporting { background: #fff7ed; color: #c2410c; }
+  .badge-closed { background: #f0fdf4; color: #15803d; }
+  .badge-deferred { background: #fef9c3; color: #854d0e; }
+  .badge-cancelled { background: #fef2f2; color: #991b1b; }
+  .badge-draft { background: #f1f5f9; color: #475569; }
+  .badge-open { background: #fff7ed; color: #c2410c; }
+  .badge-approved { background: #f0fdf4; color: #15803d; }
+  .badge-pending { background: #fef9c3; color: #854d0e; }
+  .badge-overdue { background: #fef2f2; color: #dc2626; }
+  .badge-due-soon { background: #fff7ed; color: #ea580c; }
+  .badge-not-due { background: #f0fdf4; color: #16a34a; }
+  .badge-never { background: #f8fafc; color: #64748b; }
+  .badge-default { background: #f1f5f9; color: #475569; }
+
+  /* Forms */
+  .form-group { margin-bottom: 16px; }
+  .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
+  label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.3px; }
+  input[type=text], input[type=number], input[type=date], input[type=email], select, textarea {
+    width: 100%; padding: 8px 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; color: var(--text); background: var(--surface); transition: border 0.15s; outline: none;
+  }
+  input:focus, select:focus, textarea:focus { border-color: var(--primary-light); box-shadow: 0 0 0 3px rgba(59,130,246,0.1); }
+  textarea { resize: vertical; min-height: 80px; }
+
+  /* Grid */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+
+  /* Stats */
+  .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
+  .stat-label { font-size: 11px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+  .stat-value { font-size: 28px; font-weight: 800; margin: 6px 0 2px; }
+  .stat-sub { font-size: 12px; color: var(--muted); }
+  .stat-icon { font-size: 28px; }
+
+  /* Modals */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; }
+  .modal { background: var(--surface); border-radius: 10px; width: 100%; max-width: 640px; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,0.2); }
+  .modal-lg { max-width: 860px; }
+  .modal-header { padding: 20px 24px 16px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .modal-header h3 { font-size: 16px; font-weight: 700; }
+  .modal-close { background: none; border: none; font-size: 20px; cursor: pointer; color: var(--muted); padding: 2px 6px; border-radius: 4px; }
+  .modal-close:hover { background: var(--bg); color: var(--text); }
+  .modal-body { padding: 24px; overflow-y: auto; flex: 1; }
+  .modal-footer { padding: 16px 24px; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 10px; }
+
+  /* Tabs (inner) */
+  .tab-bar { display: flex; border-bottom: 2px solid var(--border); margin-bottom: 20px; gap: 4px; }
+  .tab-btn { padding: 8px 16px; font-size: 13px; font-weight: 500; cursor: pointer; border: none; background: none; color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.15s; border-radius: 4px 4px 0 0; }
+  .tab-btn:hover { color: var(--primary); background: var(--bg); }
+  .tab-btn.active { color: var(--primary); border-bottom-color: var(--primary); font-weight: 700; }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* Timeline */
+  .timeline { list-style: none; padding: 0; }
+  .timeline-item { display: flex; gap: 12px; margin-bottom: 16px; }
+  .timeline-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--primary-light); flex-shrink: 0; margin-top: 4px; }
+  .timeline-dot.success { background: var(--success); }
+  .timeline-dot.warning { background: var(--warning); }
+  .timeline-dot.danger { background: var(--danger); }
+  .timeline-content { flex: 1; }
+  .timeline-title { font-size: 13px; font-weight: 600; }
+  .timeline-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  /* Progress */
+  .progress-bar { background: var(--border); border-radius: 99px; height: 6px; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 99px; background: var(--primary-light); transition: width 0.3s; }
+
+  /* Alert */
+  .alert { padding: 12px 16px; border-radius: 6px; font-size: 13px; margin-bottom: 16px; display: flex; align-items: flex-start; gap: 10px; }
+  .alert-info { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; }
+  .alert-warning { background: #fffbeb; border: 1px solid #fde68a; color: #92400e; }
+  .alert-success { background: #f0fdf4; border: 1px solid #bbf7d0; color: #14532d; }
+  .alert-danger { background: #fef2f2; border: 1px solid #fecaca; color: #991b1b; }
+
+  /* Checklist */
+  .check-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .check-item:last-child { border-bottom: none; }
+  .check-item input[type=checkbox] { width: 16px; height: 16px; accent-color: var(--primary); }
+  .check-label { font-size: 13px; flex: 1; }
+
+  /* Risk matrix colors */
+  .risk-critical { color: var(--danger); font-weight: 700; }
+  .risk-high { color: var(--warning); font-weight: 700; }
+  .risk-medium { color: #ca8a04; font-weight: 700; }
+  .risk-low { color: var(--success); font-weight: 700; }
+
+  /* Misc */
+  .flex { display: flex; align-items: center; }
+  .gap-2 { gap: 8px; }
+  .gap-3 { gap: 12px; }
+  .mt-4 { margin-top: 16px; }
+  .mt-6 { margin-top: 24px; }
+  .mb-4 { margin-bottom: 16px; }
+  .text-muted { color: var(--muted); }
+  .text-sm { font-size: 12px; }
+  .font-bold { font-weight: 700; }
+  .text-right { text-align: right; }
+  .hidden { display: none !important; }
+  .divider { height: 1px; background: var(--border); margin: 20px 0; }
+  .chip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; background: var(--bg); border: 1px solid var(--border); border-radius: 20px; font-size: 11px; color: var(--muted); }
+
+  /* Workflow Steps */
+  .workflow-steps { display: flex; align-items: center; gap: 0; margin-bottom: 24px; overflow-x: auto; padding-bottom: 4px; }
+  .wf-step { display: flex; flex-direction: column; align-items: center; flex: 1; min-width: 90px; }
+  .wf-step-circle { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; border: 2px solid var(--border); background: var(--surface); color: var(--muted); }
+  .wf-step-circle.done { background: var(--success); border-color: var(--success); color: #fff; }
+  .wf-step-circle.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+  .wf-step-label { font-size: 10px; color: var(--muted); margin-top: 4px; text-align: center; max-width: 80px; }
+  .wf-connector { flex: 1; height: 2px; background: var(--border); margin-top: -18px; min-width: 20px; }
+  .wf-connector.done { background: var(--success); }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+
+  /* Toast */
+  #toast-container { position: fixed; bottom: 24px; right: 24px; display: flex; flex-direction: column; gap: 8px; z-index: 9999; }
+  .toast { background: #1e293b; color: #f8fafc; padding: 12px 18px; border-radius: 8px; font-size: 13px; box-shadow: var(--shadow-md); display: flex; align-items: center; gap: 10px; animation: slideIn 0.2s ease; }
+  .toast.success { border-left: 3px solid var(--success); }
+  .toast.error { border-left: 3px solid var(--danger); }
+  .toast.info { border-left: 3px solid var(--accent); }
+  @keyframes slideIn { from { transform: translateX(40px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+  @media (max-width: 768px) {
+    .sidebar { width: 200px; }
+    .grid-4 { grid-template-columns: 1fr 1fr; }
+    .grid-3 { grid-template-columns: 1fr 1fr; }
+    .grid-2 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div id="toast-container"></div>
+
+<!-- MODAL CONTAINER -->
+<div id="modal-root"></div>
+
+<div class="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h1>🔍 AMS</h1>
+      <p>Audit Management System</p>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Dashboard</div>
+      <div class="nav-item active" onclick="navigate('dashboard')" id="nav-dashboard">
+        <span class="icon">📊</span> Dashboard
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Planning</div>
+      <div class="nav-item" onclick="navigate('universe')" id="nav-universe">
+        <span class="icon">🌐</span> Audit Universe
+      </div>
+      <div class="nav-item" onclick="navigate('plan')" id="nav-plan">
+        <span class="icon">📋</span> Annual Plan
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Execution</div>
+      <div class="nav-item" onclick="navigate('engagements')" id="nav-engagements">
+        <span class="icon">🗂️</span> Engagements
+      </div>
+      <div class="nav-item" onclick="navigate('fieldwork')" id="nav-fieldwork">
+        <span class="icon">🔬</span> Fieldwork
+      </div>
+      <div class="nav-item" onclick="navigate('docreqs')" id="nav-docreqs">
+        <span class="icon">📁</span> Document Requests
+        <span class="nav-badge" id="badge-docreqs">3</span>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Reporting</div>
+      <div class="nav-item" onclick="navigate('reporting')" id="nav-reporting">
+        <span class="icon">📑</span> Reports
+      </div>
+      <div class="nav-item" onclick="navigate('issues')" id="nav-issues">
+        <span class="icon">⚠️</span> Issues & Remediation
+        <span class="nav-badge" id="badge-issues">7</span>
+      </div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Administration</div>
+      <div class="nav-item" onclick="navigate('iam')" id="nav-iam">
+        <span class="icon">👥</span> Users & Roles
+      </div>
+      <div class="nav-item" onclick="navigate('trail')" id="nav-trail">
+        <span class="icon">🔒</span> Audit Trail
+      </div>
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="user-chip" onclick="navigate('iam')">
+        <div class="user-avatar" id="user-avatar">CA</div>
+        <div class="user-info">
+          <div class="user-name" id="user-name">Chief Auditor</div>
+          <div class="user-role" id="user-role">Chief Audit Executive</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="topbar">
+      <h2 id="page-title">Dashboard</h2>
+      <div class="topbar-actions" id="topbar-actions"></div>
+    </div>
+    <div class="content" id="main-content">
+      <!-- Dynamic content rendered here -->
+    </div>
+  </main>
+</div>
+
+<script>
+// ============================================================
+// DATA STORE (In-memory simulation)
+// ============================================================
+const DB = {
+  currentUser: { id: 'AUDR-001', name: 'Maria Santos', role: 'cae', initials: 'MS', dept: 'Internal Audit' },
+
+  roles: [
+    { id: 'cae', label: 'Chief Audit Executive' },
+    { id: 'manager', label: 'Audit Manager' },
+    { id: 'lead', label: 'Audit-in-Charge' },
+    { id: 'staff', label: 'Staff Auditor' },
+    { id: 'reviewer', label: 'Independent Reviewer' },
+    { id: 'committee', label: 'Audit Committee Member' },
+    { id: 'exec', label: 'Executive Viewer' },
+    { id: 'dept_head', label: 'Department Head' },
+    { id: 'owner', label: 'Issue Owner (Auditee)' },
+    { id: 'admin', label: 'System Administrator' },
+  ],
+
+  users: [
+    { id: 'AUDR-001', fullName: 'Maria Santos', email: 'msantos@company.com', department: 'Internal Audit', assignedRoles: ['role:cae'], invitation: { status: 'Active' } },
+    { id: 'AUDR-002', fullName: 'James Reyes', email: 'jreyes@company.com', department: 'Internal Audit', assignedRoles: ['role:auditor_in_charge'], invitation: { status: 'Active' } },
+    { id: 'AUDR-003', fullName: 'Ana Cruz', email: 'acruz@company.com', department: 'Internal Audit', assignedRoles: ['role:staff_auditor'], invitation: { status: 'Active' } },
+    { id: 'AUDR-004', fullName: 'Carlos Tan', email: 'ctan@company.com', department: 'Internal Audit', assignedRoles: ['role:independent_reviewer'], invitation: { status: 'Active' } },
+    { id: 'USR-001', fullName: 'Robert Lim', email: 'rlim@company.com', department: 'Finance', assignedRoles: ['role:dept_head'], invitation: { status: 'Active' } },
+    { id: 'USR-002', fullName: 'Grace Ocampo', email: 'gocampo@company.com', department: 'IT', assignedRoles: ['role:issue_owner'], reportsTo: 'USR-001', invitation: { status: 'Active' } },
+    { id: 'USR-003', fullName: 'Mark Dela Cruz', email: 'mdelacruz@company.com', department: 'Operations', assignedRoles: ['role:issue_owner'], reportsTo: 'USR-001', invitation: { status: 'Active' } },
+    { id: 'SIG-001', fullName: 'Board Audit Committee', email: 'bac@company.com', department: 'Board', assignedRoles: ['role:audit_committee'], invitation: { status: 'Active' } },
+  ],
+
+  auditables: [
+    { sk: 'ENT-001', entityName: 'Core Banking System', category: 'system', department: 'IT', owner: 'USR-002', likelihood: 5, impact: 5, riskScore: 25, riskRating: 'Critical', auditFrequencyMonths: 6, defaultSize: 'Complex', lastAuditDate: '2024-06-15', lastAuditId: 'AUD-2024-001', nextDueDate: '2024-12-15', dueStatus: 'Overdue', version: 3 },
+    { sk: 'ENT-002', entityName: 'Financial Reporting', category: 'process', department: 'Finance', owner: 'USR-001', likelihood: 4, impact: 5, riskScore: 20, riskRating: 'Critical', auditFrequencyMonths: 6, defaultSize: 'Complex', lastAuditDate: '2025-01-10', lastAuditId: 'AUD-2025-001', nextDueDate: '2025-07-10', dueStatus: 'Overdue', version: 2 },
+    { sk: 'ENT-003', entityName: 'Procurement & Vendor Mgmt', category: 'process', department: 'Operations', owner: 'USR-003', likelihood: 3, impact: 4, riskScore: 12, riskRating: 'High', auditFrequencyMonths: 12, defaultSize: 'Medium', lastAuditDate: '2025-03-20', lastAuditId: 'AUD-2025-002', nextDueDate: '2026-03-20', dueStatus: 'Due <= 90 days', version: 2 },
+    { sk: 'ENT-004', entityName: 'HR & Payroll', category: 'department', department: 'HR', owner: 'USR-001', likelihood: 2, impact: 4, riskScore: 8, riskRating: 'Medium', auditFrequencyMonths: 24, defaultSize: 'Medium', lastAuditDate: null, lastAuditId: null, nextDueDate: null, dueStatus: 'Never audited', version: 1 },
+    { sk: 'ENT-005', entityName: 'Branch Operations - Makati', category: 'location', department: 'Operations', owner: 'USR-003', likelihood: 2, impact: 3, riskScore: 6, riskRating: 'Medium', auditFrequencyMonths: 24, defaultSize: 'Simple', lastAuditDate: '2024-12-01', lastAuditId: 'AUD-2024-005', nextDueDate: '2026-12-01', dueStatus: 'Not due', version: 1 },
+    { sk: 'ENT-006', entityName: 'Cybersecurity Controls', category: 'system', department: 'IT', owner: 'USR-002', likelihood: 5, impact: 4, riskScore: 20, riskRating: 'Critical', auditFrequencyMonths: 6, defaultSize: 'Complex', lastAuditDate: '2025-04-01', lastAuditId: null, nextDueDate: '2025-10-01', dueStatus: 'Overdue', version: 1 },
+  ],
+
+  audits: [
+    { sk: 'AUD-2026-001', entityId: 'ENT-001', auditType: 'IT', title: 'Core Banking System IT Audit 2026', status: 'In progress', size: 'Complex', budgetedHours: 400, targetWeeks: 6, startDate: '2026-09-01', endDate: '2026-10-15', objectives: 'Assess IT controls, cybersecurity posture, and system reliability of core banking operations.', scope: 'Core Banking System modules including transaction processing, user access, and data management.', team: { supervisor: { auditorId: 'AUDR-001', allocatedHours: 40 }, lead: { auditorId: 'AUDR-002', allocatedHours: 120 }, staff: [{ auditorId: 'AUDR-003', allocatedHours: 240 }] }, contacts: ['USR-002'], readinessChecks: { objectives: true, scope: true, lead: true, independence: true, timeline: true, notificationLetter: true, docRequestList: true, teamConfirmed: true, managementBriefing: false }, report: { status: 'Draft', overallRating: null }, version: 5 },
+    { sk: 'AUD-2026-002', entityId: 'ENT-002', auditType: 'Financial', title: 'Financial Reporting Audit Q2 2026', status: 'Reporting', size: 'Complex', budgetedHours: 400, targetWeeks: 6, startDate: '2026-07-15', endDate: '2026-09-30', objectives: 'Evaluate accuracy, completeness, and compliance of financial reporting processes.', scope: 'General ledger, financial statements, period-close procedures.', team: { supervisor: { auditorId: 'AUDR-001', allocatedHours: 40 }, lead: { auditorId: 'AUDR-002', allocatedHours: 120 }, staff: [{ auditorId: 'AUDR-003', allocatedHours: 240 }] }, contacts: ['USR-001'], readinessChecks: { objectives: true, scope: true, lead: true, independence: true, timeline: true, notificationLetter: true, docRequestList: true, teamConfirmed: true, managementBriefing: true }, report: { reportRef: 'IA-2026-002-RPT', status: 'For engagement lead approval', overallRating: 'Needs improvement', reportDate: '2026-10-28', executiveSummary: 'The audit identified two significant findings related to period-close controls and journal entry approvals.', includedFindingIds: ['AUD-2026-002#F-001', 'AUD-2026-002#F-002'] }, version: 8 },
+    { sk: 'AUD-2026-003', entityId: 'ENT-003', auditType: 'Operational', title: 'Procurement Controls Audit 2026', status: 'Planned', size: 'Medium', budgetedHours: 240, targetWeeks: 4, startDate: '2026-12-01', endDate: '2026-12-31', objectives: 'Review procurement processes and vendor management controls.', scope: 'Vendor onboarding, PO process, three-way matching, payment approvals.', team: { supervisor: { auditorId: 'AUDR-001', allocatedHours: 30 }, lead: { auditorId: 'AUDR-002', allocatedHours: 80 }, staff: [] }, contacts: ['USR-003'], readinessChecks: { objectives: true, scope: false, lead: true, independence: false, timeline: false, notificationLetter: false, docRequestList: false, teamConfirmed: false, managementBriefing: false }, report: { status: 'Draft' }, version: 1 },
+  ],
+
+  notes: [
+    { sk: 'AUD-2026-001#WN-001', auditId: 'AUD-2026-001', ref: 'WN-001', type: 'NOTE', title: 'User Access Review - System Admin Accounts', reviewStatus: 'For head review', independentReviewNeeded: false, isSharedWithAuditee: false, comments: [], version: 2 },
+    { sk: 'AUD-2026-001#WN-002', auditId: 'AUD-2026-001', ref: 'WN-002', type: 'NOTE', title: 'Patch Management Observation', reviewStatus: 'Draft', independentReviewNeeded: false, isSharedWithAuditee: false, comments: [], version: 1 },
+    { sk: 'AUD-2026-001#F-001', auditId: 'AUD-2026-001', ref: 'F-001', type: 'FINDING', title: 'Excessive Privileged Access Accounts', reviewStatus: 'Cleared', independentReviewNeeded: true, isSharedWithAuditee: true, severity: 'High', category: 'Access Control', condition: '38 dormant admin accounts identified in production system', criteria: 'IT Security Policy 3.2 - Access reviews shall be conducted quarterly', cause: 'Lack of automated deprovisioning upon role change or termination', effect: 'Unauthorized access risk to core banking data and functions', recommendation: 'Implement automated deprovisioning workflow integrated with HR system', actionOwner: 'USR-002', targetDate: '2026-12-31', comments: [{ commentId: 'C001', authorId: 'AUDR-002', authorRole: 'Lead', text: 'Confirmed with IT team - 38 accounts verified dormant for 90+ days.', visibility: 'Internal', createdAt: '2026-10-15T10:00:00Z' }], version: 4 },
+    { sk: 'AUD-2026-002#F-001', auditId: 'AUD-2026-002', ref: 'F-001', type: 'FINDING', title: 'Inadequate Period-Close Controls', reviewStatus: 'Cleared', independentReviewNeeded: true, isSharedWithAuditee: true, severity: 'High', category: 'Financial Controls', condition: 'Journal entries over PHP 500K approved by same preparer', criteria: 'Segregation of duties policy', cause: 'System configuration does not enforce dual approval', effect: 'Risk of unauthorized financial adjustments', recommendation: 'Configure system to require approver different from preparer', actionOwner: 'USR-001', targetDate: '2026-11-30', comments: [], version: 3 },
+    { sk: 'AUD-2026-002#F-002', auditId: 'AUD-2026-002', ref: 'F-002', type: 'FINDING', title: 'Incomplete Reconciliation Documentation', reviewStatus: 'Cleared', independentReviewNeeded: false, isSharedWithAuditee: true, severity: 'Medium', category: 'Documentation', condition: '12 of 30 monthly reconciliations lacked supervisor sign-off', criteria: 'Reconciliation Policy 4.1', cause: 'Manual process without system enforcement', effect: 'Undetected reconciliation errors may persist', recommendation: 'Implement digital workflow for reconciliation approvals', actionOwner: 'USR-001', targetDate: '2026-11-30', comments: [], version: 2 },
+  ],
+
+  docreqs: [
+    { sk: 'AUD-2026-001__DRL-001', auditId: 'AUD-2026-001', requestId: 'DRL-001', title: 'User Access Report - All Systems', description: 'Complete list of all active users with access rights per system as of audit date.', dueDate: '2026-09-15', status: 'Accepted', attachedFiles: ['evidence/AUD-2026-001/auditee/user-access-report.xlsx'], version: 3 },
+    { sk: 'AUD-2026-001__DRL-002', auditId: 'AUD-2026-001', requestId: 'DRL-002', title: 'IT Security Policy Documentation', description: 'Current version of IT Security Policy and last review date.', dueDate: '2026-09-15', status: 'Submitted', attachedFiles: ['evidence/AUD-2026-001/auditee/it-security-policy-v4.pdf'], version: 2 },
+    { sk: 'AUD-2026-001__DRL-003', auditId: 'AUD-2026-001', requestId: 'DRL-003', title: 'Quarterly Access Review Records', description: 'Evidence of access reviews performed in the past 12 months.', dueDate: '2026-09-20', status: 'Returned', returnReason: 'Document provided is outdated. Please provide Q3 and Q4 2025 reviews.', attachedFiles: [], version: 2 },
+    { sk: 'AUD-2026-002__DRL-001', auditId: 'AUD-2026-002', requestId: 'DRL-001', title: 'Journal Entry Listing - Q1 & Q2 2026', description: 'Complete JE listing with approver details and amounts.', dueDate: '2026-08-01', status: 'Accepted', attachedFiles: ['evidence/AUD-2026-002/auditee/je-listing-q1q2-2026.xlsx'], version: 2 },
+    { sk: 'AUD-2026-003__DRL-001', auditId: 'AUD-2026-003', requestId: 'DRL-001', title: 'Vendor Master List', description: 'Current vendor master list with onboarding dates and approval status.', dueDate: '2026-12-10', status: 'Requested', attachedFiles: [], version: 1 },
+  ],
+
+  issues: [
+    { sk: 'AUD-2026-001-F-001', auditId: 'AUD-2026-001', findingId: 'F-001', dept: 'IT', status: 'In progress', owner: 'USR-002', monitoringAuditor: 'AUDR-002', engagementLead: 'AUDR-002', severity: 'High', originalTargetDate: '2026-12-31', currentTargetDate: '2026-12-31', extensionCount: 0, percentComplete: 35, findingSnapshot: { condition: '38 dormant admin accounts identified', recommendation: 'Implement automated deprovisioning workflow' }, closureFlow: { currentStep: 0, outcome: 'Pending' }, closedAt: null, version: 2 },
+    { sk: 'AUD-2026-002-F-001', auditId: 'AUD-2026-002', findingId: 'F-001', dept: 'Finance', status: 'For auditee head approval', owner: 'USR-001', monitoringAuditor: 'AUDR-002', engagementLead: 'AUDR-002', severity: 'High', originalTargetDate: '2026-11-30', currentTargetDate: '2026-11-30', extensionCount: 0, percentComplete: 100, findingSnapshot: { condition: 'Journal entries over PHP 500K approved by same preparer', recommendation: 'Configure system to require approver different from preparer' }, closureFlow: { currentStep: 1, submissionSummary: 'System configuration updated and tested. Dual-approval now enforced for all JEs above threshold.', closureArtifactFileKeys: ['evidence/AUD-2026-002/closure/config-screenshot.png'], headApproval: null, outcome: 'Pending' }, closedAt: null, version: 4 },
+    { sk: 'AUD-2026-002-F-002', auditId: 'AUD-2026-002', findingId: 'F-002', dept: 'Finance', status: 'Open', owner: 'USR-001', monitoringAuditor: 'AUDR-002', engagementLead: 'AUDR-002', severity: 'Medium', originalTargetDate: '2026-11-30', currentTargetDate: '2026-11-30', extensionCount: 0, percentComplete: 0, findingSnapshot: { condition: '12 of 30 monthly reconciliations lacked supervisor sign-off', recommendation: 'Implement digital workflow for reconciliation approvals' }, closureFlow: { currentStep: 0, outcome: 'Pending' }, closedAt: null, version: 1 },
+  ],
+
+  trail: [
+    { sk: '2026-10-28T14:30:00Z#a1b2c3', auditId: 'AUD-2026-002', action: 'StatusTransition', entityRef: 'IA-2026-002-RPT', performedBy: 'AUDR-002', roles: ['role:auditor_in_charge'], details: { from: 'Draft', to: 'For engagement lead approval' }, timestamp: '2026-10-28T14:30:00Z' },
+    { sk: '2026-10-20T09:15:00Z#d4e5f6', auditId: 'AUD-2026-001', action: 'Review', entityRef: 'F-001', performedBy: 'AUDR-001', roles: ['role:cae'], details: { from: 'For independent review', to: 'Cleared' }, timestamp: '2026-10-20T09:15:00Z' },
+    { sk: '2026-10-15T11:00:00Z#g7h8i9', auditId: 'AUD-2026-001', action: 'Edit', entityRef: 'F-001', performedBy: 'AUDR-002', roles: ['role:auditor_in_charge'], details: { field: 'condition', prev: 'Draft finding', next: '38 dormant admin accounts' }, timestamp: '2026-10-15T11:00:00Z' },
+    { sk: '2026-10-01T08:00:00Z#j0k1l2', auditId: '_iam', action: 'Create', entityRef: 'USR-002', performedBy: 'AUDR-001', roles: ['role:cae'], details: { action: 'User invited', email: 'gocampo@company.com' }, timestamp: '2026-10-01T08:00:00Z' },
+  ],
+};
+
+// ============================================================
+// HELPERS
+// ============================================================
+function toast(msg, type = 'info') {
+  const c = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  const icons = { info: 'ℹ️', success: '✅', error: '❌' };
+  t.innerHTML = `<span>${icons[type] || 'ℹ️'}</span><span>${msg}</span>`;
+  c.appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+
+function badge(status) {
+  const map = {
+    'Critical': 'badge-critical', 'High': 'badge-high', 'Medium': 'badge-medium', 'Low': 'badge-low',
+    'Planned': 'badge-planned', 'Scheduled': 'badge-scheduled', 'In progress': 'badge-in-progress',
+    'Reporting': 'badge-reporting', 'Closed': 'badge-closed', 'Deferred': 'badge-deferred', 'Cancelled': 'badge-cancelled',
+    'Draft': 'badge-draft', 'Open': 'badge-open', 'Approved': 'badge-approved', 'Pending': 'badge-pending',
+    'Overdue': 'badge-overdue', 'Due <= 90 days': 'badge-due-soon', 'Not due': 'badge-not-due', 'Never audited': 'badge-never',
+    'Accepted': 'badge-approved', 'Requested': 'badge-pending', 'Returned': 'badge-overdue', 'Submitted': 'badge-in-progress',
+    'Active': 'badge-approved', 'Invited': 'badge-in-progress', 'Expired': 'badge-overdue', 'Not invited': 'badge-never',
+    'Cleared': 'badge-approved', 'For head review': 'badge-in-progress', 'For independent review': 'badge-warning',
+    'For auditee head approval': 'badge-warning', 'For auditor review': 'badge-in-progress', 'For engagement lead approval': 'badge-in-progress',
+  };
+  const cls = map[status] || 'badge-default';
+  return `<span class="badge ${cls}">${status}</span>`;
+}
+
+function userName(id) {
+  const u = DB.users.find(x => x.id === id);
+  return u ? u.fullName : id;
+}
+
+function riskClass(rating) {
+  return { Critical: 'risk-critical', High: 'risk-high', Medium: 'risk-medium', Low: 'risk-low' }[rating] || '';
+}
+
+function modal(title, bodyHtml, footerHtml = '', sizeCls = '') {
+  document.getElementById('modal-root').innerHTML = `
+    <div class="modal-overlay" onclick="if(event.target===this)closeModal()">
+      <div class="modal ${sizeCls}">
+        <div class="modal-header">
+          <h3>${title}</h3>
+          <button class="modal-close" onclick="closeModal()">✕</button>
+        </div>
+        <div class="modal-body">${bodyHtml}</div>
+        ${footerHtml ? `<div class="modal-footer">${footerHtml}</div>` : ''}
+      </div>
+    </div>`;
+}
+
+function closeModal() {
+  document.getElementById('modal-root').innerHTML = '';
+}
+
+function fmt(dateStr) {
+  if (!dateStr) return '—';
+  const d = new Date(dateStr);
+  return d.toLocaleDateString('en-PH', { year: 'numeric', month: 'short', day: 'numeric' });
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+let currentPage = 'dashboard';
+
+function navigate(page) {
+  currentPage = page;
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const navEl = document.getElementById(`nav-${page}`);
+  if (navEl) navEl.classList.add('active');
+
+  const titles = {
+    dashboard: 'Dashboard',
+    universe: 'Audit Universe',
+    plan: 'Annual Audit Plan',
+    engagements: 'Engagements',
+    fieldwork: 'Fieldwork & Notes',
+    docreqs: 'Document Requests',
+    reporting: 'Reports',
+    issues: 'Issues & Remediation',
+    iam: 'Users & Roles',
+    trail: 'Audit Trail',
+  };
+  document.getElementById('page-title').textContent = titles[page] || page;
+  document.getElementById('topbar-actions').innerHTML = '';
+
+  const render = {
+    dashboard: renderDashboard,
+    universe: renderUniverse,
+    plan: renderPlan,
+    engagements: renderEngagements,
+    fieldwork: renderFieldwork,
+    docreqs: renderDocReqs,
+    reporting: renderReporting,
+    issues: renderIssues,
+    iam: renderIAM,
+    trail: renderTrail,
+  };
+  if (render[page]) render[page]();
+}
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+function renderDashboard() {
+  const overdue = DB.auditables.filter(a => a.dueStatus === 'Overdue').length;
+  const openIssues = DB.issues.filter(i => i.status !== 'Closed').length;
+  const inProgress = DB.audits.filter(a => a.status === 'In progress').length;
+  const pendingDocs = DB.docreqs.filter(d => d.status === 'Submitted').length;
+
+  document.getElementById('main-content').innerHTML = `
+    <div class="grid-4 mb-4">
+      <div class="stat-card">
+        <div class="flex gap-2" style="justify-content:space-between;align-items:flex-start">
+          <div>
+            <div class="stat-label">Active Engagements</div>
+            <div class="stat-value" style="color:var(--primary)">${inProgress}</div>
+            <div class="stat-sub">In progress</div>
+          </div>
+          <div class="stat-icon">🗂️</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="flex gap-2" style="justify-content:space-between;align-items:flex-start">
+          <div>
+            <div class="stat-label">Overdue Entities</div>
+            <div class="stat-value" style="color:var(--danger)">${overdue}</div>
+            <div class="stat-sub">Audit universe</div>
+          </div>
+          <div class="stat-icon">⚠️</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="flex gap-2" style="justify-content:space-between;align-items:flex-start">
+          <div>
+            <div class="stat-label">Open Issues</div>
+            <div class="stat-value" style="color:var(--warning)">${openIssues}</div>
+            <div class="stat-sub">Awaiting remediation</div>
+          </div>
+          <div class="stat-icon">🔴</div>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="flex gap-2" style="justify-content:space-between;align-items:flex-start">
+          <div>
+            <div class="stat-label">Docs to Review</div>
+            <div class="stat-value" style="color:var(--info)">${pendingDocs}</div>
+            <div class="stat-sub">Submitted by auditees</div>
+          </div>
+          <div class="stat-icon">📁</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">Workflow Overview</div>
+        </div>
+        <div class="card-body">
+          <div class="workflow-steps">
+            <div class="wf-step">
+              <div class="wf-step-circle done">1</div>
+              <div class="wf-step-label">Risk Assessment</div>
+            </div>
+            <div class="wf-connector done"></div>
+            <div class="wf-step">
+              <div class="wf-step-circle done">2</div>
+              <div class="wf-step-label">Annual Plan</div>
+            </div>
+            <div class="wf-connector done"></div>
+            <div class="wf-step">
+              <div class="wf-step-circle active">3</div>
+              <div class="wf-step-label">Engagement</div>
+            </div>
+            <div class="wf-connector"></div>
+            <div class="wf-step">
+              <div class="wf-step-circle">4</div>
+              <div class="wf-step-label">Fieldwork</div>
+            </div>
+            <div class="wf-connector"></div>
+            <div class="wf-step">
+              <div class="wf-step-circle">5</div>
+              <div class="wf-step-label">Reporting</div>
+            </div>
+            <div class="wf-connector"></div>
+            <div class="wf-step">
+              <div class="wf-step-circle">6</div>
+              <div class="wf-step-label">Remediation</div>
+            </div>
+          </div>
+          <div style="margin-top:16px;">
+            ${DB.audits.map(a => `
+              <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)">
+                <div>
+                  <div style="font-size:13px;font-weight:600">${a.sk} — ${a.title.substring(0, 40)}...</div>
+                  <div class="text-muted text-sm">${fmt(a.startDate)} → ${fmt(a.endDate)}</div>
+                </div>
+                ${badge(a.status)}
+              </div>`).join('')}
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header"><div class="card-title">Recent Activity</div></div>
+        <div class="card-body">
+          <ul class="timeline">
+            ${DB.trail.map(t => `
+              <li class="timeline-item">
+                <div class="timeline-dot ${t.action === 'StatusTransition' ? 'success' : t.action === 'Create' ? 'warning' : ''}"></div>
+                <div class="timeline-content">
+                  <div class="timeline-title">${t.action} — ${t.entityRef}</div>
+                  <div class="timeline-meta">${userName(t.performedBy)} · ${fmt(t.timestamp)}</div>
+                </div>
+              </li>`).join('')}
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="card mt-4">
+      <div class="card-header">
+        <div class="card-title">Issues by Status</div>
+        <button class="btn btn-primary btn-sm" onclick="navigate('issues')">View All Issues</button>
+      </div>
+      <div class="card-body table-wrap">
+        <table>
+          <thead><tr><th>Issue Ref</th><th>Finding</th><th>Dept</th><th>Severity</th><th>Owner</th><th>Target Date</th><th>Progress</th><th>Status</th></tr></thead>
+          <tbody>
+            ${DB.issues.map(i => `
+              <tr>
+                <td><strong>${i.sk}</strong></td>
+                <td>${i.findingSnapshot.condition.substring(0, 40)}...</td>
+                <td>${i.dept}</td>
+                <td>${badge(i.severity)}</td>
+                <td>${userName(i.owner)}</td>
+                <td>${fmt(i.currentTargetDate)}</td>
+                <td style="min-width:100px">
+                  <div class="progress-bar"><div class="progress-fill" style="width:${i.percentComplete}%"></div></div>
+                  <div class="text-sm text-muted mt-1">${i.percentComplete}%</div>
+                </td>
+                <td>${badge(i.status)}</td>
+              </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+// ============================================================
+// STAGE 1: AUDIT UNIVERSE
+// ============================================================
+function renderUniverse() {
+  document.getElementById('topbar-actions').innerHTML = `
+    <button class="btn btn-primary btn-sm" onclick="openAddEntity()">+ Add Entity</button>`;
+
+  const html = `
+    <div class="alert alert-info">
+      <span>ℹ️</span>
+      <div><strong>Stage 1: Risk Assessment & Universe</strong> — Register auditable entities and rate Likelihood (1–5) × Impact (1–5) to derive Risk Score and audit frequency.</div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Audit Universe (${DB.auditables.length} entities)</div>
+        <div class="flex gap-2">
+          <select id="filter-status" onchange="filterUniverse()" style="font-size:12px;padding:5px 8px;border-radius:5px;border:1px solid var(--border)">
+            <option value="">All Statuses</option>
+            <option>Overdue</option><option>Due &lt;= 90 days</option><option>Not due</option><option>Never audited</option><option>Scheduled</option>
+          </select>
+          <select id="filter-rating" onchange="filterUniverse()" style="font-size:12px;padding:5px 8px;border-radius:5px;border:1px solid var(--border)">
+            <option value="">All Ratings</option>
+            <option>Critical</option><option>High</option><option>Medium</option><option>Low</option>
+          </select>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table id="universe-table">
+          <thead><tr><th>Code</th><th>Entity</th><th>Category</th><th>Dept</th><th>Likelihood</th><th>Impact</th><th>Risk Score</th><th>Rating</th><th>Frequency</th><th>Last Audit</th><th>Next Due</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody>${universeRows(DB.auditables)}</tbody>
+        </table>
+      </div>
+    </div>`;
+  document.getElementById('main-content').innerHTML = html;
+}
+
+function universeRows(list) {
+  return list.map(e => `
+    <tr>
+      <td><strong>${e.sk}</strong></td>
+      <td>${e.entityName}</td>
+      <td><span class="chip">${e.category}</span></td>
+      <td>${e.department}</td>
+      <td style="text-align:center">${e.likelihood}</td>
+      <td style="text-align:center">${e.impact}</td>
+      <td style="text-align:center;font-weight:700;font-size:15px" class="${riskClass(e.riskRating)}">${e.riskScore}</td>
+      <td>${badge(e.riskRating)}</td>
+      <td>${e.auditFrequencyMonths}m</td>
+      <td>${fmt(e.lastAuditDate)}</td>
+      <td>${fmt(e.nextDueDate)}</td>
+      <td>${badge(e.dueStatus)}</td>
+      <td>
+        <button class="btn btn-secondary btn-xs" onclick="editEntity('${e.sk}')">Edit</button>
+      </td>
+    </tr>`).join('');
+}
+
+function filterUniverse() {
+  const st = document.getElementById('filter-status').value;
+  const rt = document.getElementById('filter-rating').value;
+  let list = DB.auditables;
+  if (st) list = list.filter(e => e.dueStatus === st);
+  if (rt) list = list.filter(e => e.riskRating === rt);
+  document.querySelector('#universe-table tbody').innerHTML = universeRows(list);
+}
+
+function openAddEntity() {
+  modal('Add Auditable Entity', `
+    <div class="form-row">
+      <div class="form-group">
+        <label>Entity Name</label>
+        <input type="text" id="ent-name" placeholder="e.g. Treasury Operations">
+      </div>
+      <div class="form-group">
+        <label>Category</label>
+        <select id="ent-cat">
+          <option>process</option><option>department</option><option>location</option><option>system</option><option>vendor</option><option>project</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Department</label>
+        <input type="text" id="ent-dept" placeholder="e.g. Treasury">
+      </div>
+      <div class="form-group">
+        <label>Owner (Auditee)</label>
+        <select id="ent-owner">
+          ${DB.users.filter(u => u.assignedRoles.some(r => r.includes('owner') || r.includes('dept_head'))).map(u => `<option value="${u.id}">${u.fullName}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Likelihood (1-5)</label>
+        <input type="number" id="ent-lik" min="1" max="5" value="3" oninput="calcRisk()">
+      </div>
+      <div class="form-group">
+        <label>Impact (1-5)</label>
+        <input type="number" id="ent-imp" min="1" max="5" value="3" oninput="calcRisk()">
+      </div>
+      <div class="form-group">
+        <label>Risk Score</label>
+        <input type="text" id="ent-score" value="9" readonly style="background:var(--bg);font-weight:700">
+      </div>
+      <div class="form-group">
+        <label>Risk Rating</label>
+        <input type="text" id="ent-rating" value="Medium" readonly style="background:var(--bg);font-weight:700">
+      </div>
+    </div>`,
+    `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+     <button class="btn btn-primary" onclick="saveEntity()">Save Entity</button>`);
+}
+
+function calcRisk() {
+  const l = parseInt(document.getElementById('ent-lik').value) || 1;
+  const i = parseInt(document.getElementById('ent-imp').value) || 1;
+  const score = l * i;
+  const rating = score >= 20 ? 'Critical' : score >= 10 ? 'High' : score >= 5 ? 'Medium' : 'Low';
+  document.getElementById('ent-score').value = score;
+  document.getElementById('ent-rating').value = rating;
+}
+
+function saveEntity() {
+  const name = document.getElementById('ent-name').value.trim();
+  if (!name) { toast('Entity name is required', 'error'); return; }
+  const l = parseInt(document.getElementById('ent-lik').value);
+  const i = parseInt(document.getElementById('ent-imp').value);
+  const score = l * i;
+  const rating = score >= 20 ? 'Critical' : score >= 10 ? 'High' : score >= 5 ? 'Medium' : 'Low';
+  const freqMap = { Critical: 6, High: 12, Medium: 24, Low: 36 };
+  const n = DB.auditables.length + 1;
+  DB.auditables.push({
+    sk: `ENT-${String(n).padStart(3,'0')}`, entityName: name,
+    category: document.getElementById('ent-cat').value,
+    department: document.getElementById('ent-dept').value,
+    owner: document.getElementById('ent-owner').value,
+    likelihood: l, impact: i, riskScore: score, riskRating: rating,
+    auditFrequencyMonths: freqMap[rating], defaultSize: score >= 15 ? 'Complex' : score >= 8 ? 'Medium' : 'Simple',
+    lastAuditDate: null, lastAuditId: null, nextDueDate: null, dueStatus: 'Never audited', version: 1,
+  });
+  closeModal();
+  toast('Entity added to audit universe', 'success');
+  renderUniverse();
+}
+
+function editEntity(sk) {
+  const e = DB.auditables.find(x => x.sk === sk);
+  if (!e) return;
+  modal(`Edit Entity — ${e.sk}`, `
+    <div class="form-row">
+      <div class="form-group"><label>Likelihood (1-5)</label><input type="number" id="edit-lik" min="1" max="5" value="${e.likelihood}" oninput="calcRiskEdit()"></div>
+      <div class="form-group"><label>Impact (1-5)</label><input type="number" id="edit-imp" min="1" max="5" value="${e.impact}" oninput="calcRiskEdit()"></div>
+      <div class="form-group"><label>Risk Score</label><input id="edit-score" value="${e.riskScore}" readonly style="background:var(--bg);font-weight:700"></div>
+      <div class="form-group"><label>Risk Rating</label><input id="edit-rating" value="${e.riskRating}" readonly style="background:var(--bg);font-weight:700"></div>
+    </div>
+    <div class="form-group"><label>Notes</label><textarea id="edit-notes" placeholder="Optional notes">${e.notes || ''}</textarea></div>`,
+    `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+     <button class="btn btn-primary" onclick="updateEntity('${sk}')">Save Changes</button>`);
+}
+
+function calcRiskEdit() {
+  const l = parseInt(document.getElementById('edit-lik').value) || 1;
+  const i = parseInt(document.getElementById('edit-imp').value) || 1;
+  const score = l * i;
+  const rating = score >= 20 ? 'Critical' : score >= 10 ? 'High' : score >= 5 ? 'Medium' : 'Low';
+  document.getElementById('edit-score').value = score;
+  document.getElementById('edit-rating').value = rating;
+}
+
+function updateEntity(sk) {
+  const e = DB.auditables.find(x => x.sk === sk);
+  const l = parseInt(document.getElementById('edit-lik').value);
+  const i = parseInt(document.getElementById('edit-imp').value);
+  e.likelihood = l; e.impact = i;
+  e.riskScore = l * i;
+  e.riskRating = e.riskScore >= 20 ? 'Critical' : e.riskScore >= 10 ? 'High' : e.riskScore >= 5 ? 'Medium' : 'Low';
+  e.notes = document.getElementById('edit-notes').value;
+  e.version++;
+  closeModal();
+  toast('Entity updated', 'success');
+  renderUniverse();
+}
+
+// ============================================================
+// STAGE 2: ANNUAL PLAN
+// ============================================================
+function renderPlan() {
+  document.getElementById('topbar-actions').innerHTML = `
+    <button class="btn btn-primary btn-sm" onclick="openCreateAudit()">+ Create Audit</button>`;
+
+  const critHigh = DB.auditables.filter(a => ['Critical','High'].includes(a.riskRating));
+  const totalBudget = DB.audits.reduce((s, a) => s + a.budgetedHours, 0);
+  const planStatus = 'Approved by Audit Committee';
+
+  document.getElementById('main-content').innerHTML = `
+    <div class="alert alert-success">
+      <span>✅</span>
+      <div><strong>Stage 2: Annual Audit Planning</strong> — Annual Plan is <strong>${planStatus}</strong>. ${DB.audits.length} audits planned with ${totalBudget} total budgeted hours.</div>
+    </div>
+    <div class="grid-3 mb-4">
+      <div class="stat-card">
+        <div class="stat-label">Total Audits</div>
+        <div class="stat-value" style="color:var(--primary)">${DB.audits.length}</div>
+        <div class="stat-sub">In annual plan</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Total Budget</div>
+        <div class="stat-value" style="color:var(--success)">${totalBudget}h</div>
+        <div class="stat-sub">Allocated hours</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">High+ Risk Entities</div>
+        <div class="stat-value" style="color:var(--danger)">${critHigh.length}</div>
+        <div class="stat-sub">Prioritized for audit</div>
+      </div>
+    </div>
+
+    <div class="card mb-4">
+      <div class="card-header">
+        <div class="card-title">Annual Audit Plan — FY 2026</div>
+        <button class="btn btn-success btn-sm" onclick="toast('Annual Plan Memo generated and submitted to Audit Committee','success')">📄 Generate Plan Memo (AP)</button>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Audit Ref</th><th>Title</th><th>Type</th><th>Entity</th><th>Size</th><th>Budget Hours</th><th>Duration</th><th>Start Date</th><th>Supervisor</th><th>Lead</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody>
+            ${DB.audits.map(a => {
+              const ent = DB.auditables.find(e => e.sk === a.entityId);
+              return `<tr>
+                <td><strong>${a.sk}</strong></td>
+                <td>${a.title}</td>
+                <td><span class="chip">${a.auditType}</span></td>
+                <td>${ent ? ent.entityName : a.entityId}</td>
+                <td>${badge(a.size)}</td>
+                <td>${a.budgetedHours}h</td>
+                <td>${a.targetWeeks}w</td>
+                <td>${fmt(a.startDate)}</td>
+                <td>${userName(a.team.supervisor.auditorId)}</td>
+                <td>${userName(a.team.lead.auditorId)}</td>
+                <td>${badge(a.status)}</td>
+                <td>
+                  <button class="btn btn-secondary btn-xs" onclick="viewAuditDetail('${a.sk}')">View</button>
+                </td>
+              </tr>`;}).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-header"><div class="card-title">Entities Recommended for Plan (Critical / High Risk)</div></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Code</th><th>Entity</th><th>Risk Rating</th><th>Risk Score</th><th>Frequency</th><th>Due Status</th><th>Recommended Size</th></tr></thead>
+          <tbody>
+            ${critHigh.map(e => `<tr>
+              <td>${e.sk}</td><td>${e.entityName}</td><td>${badge(e.riskRating)}</td>
+              <td><span class="${riskClass(e.riskRating)}">${e.riskScore}</span></td>
+              <td>${e.auditFrequencyMonths}m</td><td>${badge(e.dueStatus)}</td><td>${e.defaultSize}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+function openCreateAudit() {
+  modal('Create New Audit', `
+    <div class="form-row">
+      <div class="form-group">
+        <label>Audit Title</label>
+        <input type="text" id="new-title" placeholder="e.g. IT General Controls Audit 2026">
+      </div>
+      <div class="form-group">
+        <label>Audit Type</label>
+        <select id="new-type"><option>Operational</option><option>Financial</option><option>IT</option><option>Compliance</option></select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Entity</label>
+        <select id="new-entity">${DB.auditables.map(e => `<option value="${e.sk}">${e.sk} — ${e.entityName}</option>`).join('')}</select>
+      </div>
+      <div class="form-group">
+        <label>Size</label>
+        <select id="new-size" onchange="updateBudget()">
+          <option>Simple</option><option>Medium</option><option selected>Complex</option><option>Epic</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Start Date</label><input type="date" id="new-start"></div>
+      <div class="form-group"><label>End Date</label><input type="date" id="new-end"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Budgeted Hours</label><input type="text" id="new-budget" value="400" readonly style="background:var(--bg)"></div>
+      <div class="form-group"><label>Target Weeks</label><input type="text" id="new-weeks" value="6" readonly style="background:var(--bg)"></div>
+    </div>
+    <div class="form-group"><label>Objectives</label><textarea id="new-obj" placeholder="State the audit objectives..."></textarea></div>`,
+    `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+     <button class="btn btn-primary" onclick="saveNewAudit()">Create Audit</button>`);
+}
+
+function updateBudget() {
+  const map = { Simple: [120,3], Medium: [240,4], Complex: [400,6], Epic: [640,8] };
+  const s = document.getElementById('new-size').value;
+  document.getElementById('new-budget').value = map[s][0];
+  document.getElementById('new-weeks').value = map[s][1];
+}
+
+function saveNewAudit() {
+  const title = document.getElementById('new-title').value.trim();
+  if (!title) { toast('Title is required','error'); return; }
+  const yr = new Date().getFullYear();
+  const n = DB.audits.length + 1;
+  const sk = `AUD-${yr}-${String(n).padStart(3,'0')}`;
+  const map = { Simple: [120,3], Medium: [240,4], Complex: [400,6], Epic: [640,8] };
+  const size = document.getElementById('new-size').value;
+  DB.audits.push({
+    sk, entityId: document.getElementById('new-entity').value,
+    auditType: document.getElementById('new-type').value, title,
+    status: 'Planned', size, budgetedHours: map[size][0], targetWeeks: map[size][1],
+    startDate: document.getElementById('new-start').value,
+    endDate: document.getElementById('new-end').value,
+    objectives: document.getElementById('new-obj').value,
+    scope: '', criteria: [],
+    team: { supervisor: { auditorId: 'AUDR-001', allocatedHours: 40 }, lead: { auditorId: 'AUDR-002', allocatedHours: 120 }, staff: [] },
+    contacts: [],
+    readinessChecks: { objectives: false, scope: false, lead: false, independence: false, timeline: false, notificationLetter: false, docRequestList: false, teamConfirmed: false, managementBriefing: false },
+    report: { status: 'Draft' }, version: 1,
+  });
+  closeModal();
+  toast(`Audit ${sk} created`, 'success');
+  renderPlan();
+}
+
+// ============================================================
+// ENGAGEMENTS / COCKPIT
+// ============================================================
+function renderEngagements() {
+  document.getElementById('main-content').innerHTML = `
+    <div class="alert alert-info">
+      <span>ℹ️</span>
+      <div><strong>Stage 3: Engagement Readiness</strong> — Each audit must pass 9 readiness checks before fieldwork begins. Issue Notification Letters (NL) and Document Request Lists (DRL) from here.</div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">All Engagements</div></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Ref</th><th>Title</th><th>Type</th><th>Size</th><th>Lead</th><th>Start</th><th>End</th><th>Readiness</th><th>Status</th><th></th></tr></thead>
+          <tbody>
+            ${DB.audits.map(a => {
+              const checks = Object.values(a.readinessChecks);
+              const done = checks.filter(Boolean).length;
+              const pct = Math.round(done / checks.length * 100);
+              return `<tr>
+                <td><strong>${a.sk}</strong></td>
+                <td>${a.title}</td>
+                <td><span class="chip">${a.auditType}</span></td>
+                <td>${a.size}</td>
+                <td>${userName(a.team.lead.auditorId)}</td>
+                <td>${fmt(a.startDate)}</td>
+                <td>${fmt(a.endDate)}</td>
+                <td style="min-width:100px">
+                  <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+                  <div class="text-sm text-muted">${done}/9 checks</div>
+                </td>
+                <td>${badge(a.status)}</td>
+                <td><button class="btn btn-primary btn-xs" onclick="openCockpit('${a.sk}')">Open Cockpit</button></td>
+              </tr>`;}).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+function openCockpit(sk) {
+  const a = DB.audits.find(x => x.sk === sk);
+  if (!a) return;
+  const checks = [
+    { key: 'objectives', label: 'Objectives & criteria defined' },
+    { key: 'scope', label: 'Scope clearly documented' },
+    { key: 'lead', label: 'Audit-in-Charge assigned' },
+    { key: 'independence', label: 'Independence confirmed (no conflicts)' },
+    { key: 'timeline', label: 'Engagement timeline approved' },
+    { key: 'notificationLetter', label: 'Notification Letter (NL) issued' },
+    { key: 'docRequestList', label: 'Document Request List (DRL) sent' },
+    { key: 'teamConfirmed', label: 'Full team roster confirmed' },
+    { key: 'managementBriefing', label: 'Management briefing conducted' },
+  ];
+  const checksHtml = checks.map(c => `
+    <div class="check-item">
+      <input type="checkbox" ${a.readinessChecks[c.key] ? 'checked' : ''} id="rc-${c.key}" onchange="toggleCheck('${sk}','${c.key}')">
+      <label class="check-label" for="rc-${c.key}">${c.label}</label>
+      ${a.readinessChecks[c.key] ? '<span style="color:var(--success);font-size:16px">✓</span>' : ''}
+    </div>`).join('');
+  const done = Object.values(a.readinessChecks).filter(Boolean).length;
+  const ready = done === 9;
+
+  modal(`Engagement Cockpit — ${a.sk}`, `
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab(this,'cockpit-readiness')">Readiness</button>
+      <button class="tab-btn" onclick="switchTab(this,'cockpit-team')">Team</button>
+      <button class="tab-btn" onclick="switchTab(this,'cockpit-letters')">Letters & DRL</button>
+    </div>
+    <div id="cockpit-readiness" class="tab-panel active">
+      <div class="flex gap-2 mb-4" style="justify-content:space-between;align-items:center">
+        <strong>${done}/9 Readiness Checks Completed</strong>
+        ${ready ? '<span class="badge badge-approved">✓ Ready for Fieldwork</span>' : '<span class="badge badge-pending">Not ready yet</span>'}
+      </div>
+      <div class="progress-bar mb-4" style="height:8px">
+        <div class="progress-fill" style="width:${Math.round(done/9*100)}%"></div>
+      </div>
+      ${checksHtml}
+      ${ready && a.status === 'Planned' ? `<div class="mt-4"><button class="btn btn-success" onclick="startEngagement('${sk}')">🚀 Start Engagement</button></div>` : ''}
+    </div>
+    <div id="cockpit-team" class="tab-panel">
+      <div style="display:grid;gap:12px">
+        <div class="card"><div class="card-body">
+          <div class="flex gap-3 mb-2"><strong>Supervisor:</strong> ${userName(a.team.supervisor.auditorId)}</div>
+          <div class="flex gap-3 mb-2"><strong>Lead (AIC):</strong> ${userName(a.team.lead.auditorId)}</div>
+          <div><strong>Staff:</strong> ${a.team.staff.length > 0 ? a.team.staff.map(s => userName(s.auditorId)).join(', ') : 'None assigned'}</div>
+          <div class="mt-4"><strong>Auditee Contacts:</strong> ${a.contacts.map(c => userName(c)).join(', ') || 'None'}</div>
+        </div></div>
+      </div>
+    </div>
+    <div id="cockpit-letters" class="tab-panel">
+      <div style="display:grid;gap:8px">
+        ${['Notification Letter (NL)', 'Terms of Audit (TA)', 'Team Letter (TL)', 'Document Request List (DRL)'].map(l => `
+          <div class="flex gap-2" style="justify-content:space-between;align-items:center;padding:10px;border:1px solid var(--border);border-radius:6px">
+            <span>📄 ${l}</span>
+            <button class="btn btn-secondary btn-sm" onclick="toast('${l} generated and sent to auditee','success')">Generate & Send</button>
+          </div>`).join('')}
+      </div>
+    </div>`,
+    `<button class="btn btn-secondary" onclick="closeModal()">Close</button>
+     ${a.status === 'Planned' && ready ? `<button class="btn btn-success" onclick="startEngagement('${sk}');closeModal()">🚀 Start Fieldwork</button>` : ''}`,
+    'modal-lg');
+}
+
+function toggleCheck(sk, key) {
+  const a = DB.audits.find(x => x.sk === sk);
+  a.readinessChecks[key] = !a.readinessChecks[key];
+  toast(`Check "${key}" ${a.readinessChecks[key] ? 'completed' : 'unchecked'}`, 'info');
+}
+
+function startEngagement(sk) {
+  const a = DB.audits.find(x => x.sk === sk);
+  a.status = 'In progress';
+  toast(`${sk} moved to In Progress`, 'success');
+  renderEngagements();
+}
+
+function switchTab(btn, panelId) {
+  btn.closest('.tab-bar').querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const modal = btn.closest('.modal-body');
+  modal.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById(panelId).classList.add('active');
+}
+
+// ============================================================
+// STAGE 4: FIELDWORK
+// ============================================================
+function renderFieldwork() {
+  document.getElementById('topbar-actions').innerHTML = `
+    <select id="fw-audit-sel" onchange="renderFieldworkNotes()" style="font-size:13px;padding:6px 10px;border-radius:6px;border:1px solid var(--border)">
+      ${DB.audits.filter(a => ['In progress','Reporting'].includes(a.status)).map(a => `<option value="${a.sk}">${a.sk}</option>`).join('')}
+    </select>
+    <button class="btn btn-primary btn-sm" onclick="openAddNote()">+ Add Note/Finding</button>`;
+
+  document.getElementById('main-content').innerHTML = `
+    <div class="alert alert-info">
+      <span>ℹ️</span>
+      <div><strong>Stage 4: Fieldwork</strong> — Create working notes (WN) and findings (F). Each follows: Draft → For Head Review → For Independent Review → Cleared.</div>
+    </div>
+    <div id="fieldwork-notes-area"></div>`;
+
+  setTimeout(() => renderFieldworkNotes(), 10);
+}
+
+function renderFieldworkNotes() {
+  const selEl = document.getElementById('fw-audit-sel');
+  const sk = selEl ? selEl.value : DB.audits.find(a => ['In progress','Reporting'].includes(a.status))?.sk;
+  if (!sk) { document.getElementById('fieldwork-notes-area').innerHTML = '<div class="card"><div class="card-body text-muted">No active engagements.</div></div>'; return; }
+
+  const notesList = DB.notes.filter(n => n.auditId === sk);
+  const wns = notesList.filter(n => n.type === 'NOTE');
+  const findings = notesList.filter(n => n.type === 'FINDING');
+
+  document.getElementById('fieldwork-notes-area').innerHTML = `
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchFWTab(this,'fw-findings')">Findings (${findings.length})</button>
+      <button class="tab-btn" onclick="switchFWTab(this,'fw-notes')">Working Notes (${wns.length})</button>
+    </div>
+    <div id="fw-findings" class="tab-panel active">
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Ref</th><th>Title</th><th>Severity</th><th>Category</th><th>Review Status</th><th>Shared</th><th>Action Owner</th><th>Target Date</th><th>Actions</th></tr></thead>
+            <tbody>
+              ${findings.map(f => `<tr>
+                <td><strong>${f.ref}</strong></td>
+                <td>${f.title}</td>
+                <td>${badge(f.severity)}</td>
+                <td><span class="chip">${f.category}</span></td>
+                <td>${badge(f.reviewStatus)}</td>
+                <td>${f.isSharedWithAuditee ? '<span style="color:var(--success)">●</span> Shared' : '<span style="color:var(--muted)">○</span> Internal'}</td>
+                <td>${userName(f.actionOwner)}</td>
+                <td>${fmt(f.targetDate)}</td>
+                <td>
+                  <button class="btn btn-secondary btn-xs" onclick="viewFinding('${f.sk}')">View</button>
+                  ${f.reviewStatus === 'Draft' ? `<button class="btn btn-info btn-xs" onclick="advanceReview('${f.sk}','For head review')">Submit</button>` : ''}
+                  ${f.reviewStatus === 'For head review' ? `<button class="btn btn-success btn-xs" onclick="advanceReview('${f.sk}','${f.independentReviewNeeded ? 'For independent review' : 'Cleared'}')">Approve</button>` : ''}
+                  ${f.reviewStatus === 'For independent review' ? `<button class="btn btn-success btn-xs" onclick="advanceReview('${f.sk}','Cleared')">Clear</button>` : ''}
+                </td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div id="fw-notes" class="tab-panel">
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Ref</th><th>Title</th><th>Review Status</th><th>Actions</th></tr></thead>
+            <tbody>
+              ${wns.map(n => `<tr>
+                <td><strong>${n.ref}</strong></td>
+                <td>${n.title}</td>
+                <td>${badge(n.reviewStatus)}</td>
+                <td>
+                  ${n.reviewStatus === 'Draft' ? `<button class="btn btn-info btn-xs" onclick="advanceReview('${n.sk}','For head review')">Submit for Review</button>` : ''}
+                  ${n.reviewStatus === 'For head review' ? `<button class="btn btn-success btn-xs" onclick="advanceReview('${n.sk}','Cleared')">Approve</button>` : ''}
+                </td>
+              </tr>`).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>`;
+}
+
+function switchFWTab(btn, id) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+function advanceReview(sk, newStatus) {
+  const n = DB.notes.find(x => x.sk === sk);
+  if (!n) return;
+  n.reviewStatus = newStatus;
+  n.version++;
+  DB.trail.unshift({ sk: new Date().toISOString() + '#' + Math.random().toString(36).substr(2,6), auditId: n.auditId, action: 'Review', entityRef: n.ref, performedBy: DB.currentUser.id, roles: ['role:cae'], details: { to: newStatus }, timestamp: new Date().toISOString() });
+  toast(`${n.ref} → ${newStatus}`, 'success');
+  renderFieldworkNotes();
+}
+
+function viewFinding(sk) {
+  const f = DB.notes.find(x => x.sk === sk);
+  if (!f || f.type !== 'FINDING') return;
+  modal(`Finding — ${f.ref}: ${f.title}`, `
+    <div class="grid-2 mb-4">
+      <div><label>Severity</label>${badge(f.severity)}</div>
+      <div><label>Review Status</label>${badge(f.reviewStatus)}</div>
+      <div><label>Category</label><span class="chip">${f.category}</span></div>
+      <div><label>Action Owner</label>${userName(f.actionOwner)}</div>
+      <div><label>Target Date</label>${fmt(f.targetDate)}</div>
+      <div><label>Shared with Auditee</label>${f.isSharedWithAuditee ? 'Yes' : 'No'}</div>
+    </div>
+    <div class="divider"></div>
+    <div class="form-group"><label>Condition</label><div style="background:var(--bg);padding:10px;border-radius:6px;font-size:13px">${f.condition || '—'}</div></div>
+    <div class="form-group"><label>Criteria</label><div style="background:var(--bg);padding:10px;border-radius:6px;font-size:13px">${f.criteria || '—'}</div></div>
+    <div class="form-group"><label>Cause</label><div style="background:var(--bg);padding:10px;border-radius:6px;font-size:13px">${f.cause || '—'}</div></div>
+    <div class="form-group"><label>Effect</label><div style="background:var(--bg);padding:10px;border-radius:6px;font-size:13px">${f.effect || '—'}</div></div>
+    <div class="form-group"><label>Recommendation</label><div style="background:var(--bg);padding:10px;border-radius:6px;font-size:13px">${f.recommendation || '—'}</div></div>
+    ${f.comments.length > 0 ? `<div class="divider"></div><label>Comments</label>${f.comments.map(c => `<div style="background:var(--bg);padding:10px;border-radius:6px;margin-bottom:8px;font-size:13px"><strong>${userName(c.authorId)}</strong> <span class="text-muted text-sm">${c.visibility} · ${fmt(c.createdAt)}</span><p style="margin-top:4px">${c.text}</p></div>`).join('')}` : ''}`,
+    `<button class="btn btn-secondary" onclick="closeModal()">Close</button>`);
+}
+
+function openAddNote() {
+  const selEl = document.getElementById('fw-audit-sel');
+  const auditId = selEl ? selEl.value : '';
+  modal('Add Working Note / Finding', `
+    <div class="form-row">
+      <div class="form-group">
+        <label>Type</label>
+        <select id="note-type" onchange="toggleFindingFields()"><option value="NOTE">Working Note</option><option value="FINDING">Finding</option></select>
+      </div>
+      <div class="form-group">
+        <label>Title</label>
+        <input type="text" id="note-title" placeholder="Brief descriptive title">
+      </div>
+    </div>
+    <div id="finding-fields" class="hidden">
+      <div class="form-row">
+        <div class="form-group">
+          <label>Severity</label>
+          <select id="note-sev"><option>Critical</option><option>High</option><option selected>Medium</option><option>Low</option></select>
+        </div>
+        <div class="form-group">
+          <label>Category</label>
+          <input type="text" id="note-cat" placeholder="e.g. Access Control">
+        </div>
+      </div>
+      <div class="form-group"><label>Condition</label><textarea id="note-condition" placeholder="What was observed?"></textarea></div>
+      <div class="form-group"><label>Criteria</label><textarea id="note-criteria" placeholder="What should have been?"></textarea></div>
+      <div class="form-group"><label>Cause</label><textarea id="note-cause" placeholder="Root cause..."></textarea></div>
+      <div class="form-group"><label>Effect</label><textarea id="note-effect" placeholder="Business impact..."></textarea></div>
+      <div class="form-group"><label>Recommendation</label><textarea id="note-rec" placeholder="Recommended action..."></textarea></div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Action Owner</label>
+          <select id="note-owner">${DB.users.filter(u => ['USR','SIG'].some(p => u.id.startsWith(p))).map(u => `<option value="${u.id}">${u.fullName}</option>`).join('')}</select>
+        </div>
+        <div class="form-group">
+          <label>Target Date</label>
+          <input type="date" id="note-target">
+        </div>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Independent Review Required</label>
+      <select id="note-indep"><option value="true">Yes</option><option value="false">No</option></select>
+    </div>`,
+    `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+     <button class="btn btn-primary" onclick="saveNote('${auditId}')">Save</button>`);
+}
+
+function toggleFindingFields() {
+  const type = document.getElementById('note-type').value;
+  document.getElementById('finding-fields').classList.toggle('hidden', type !== 'FINDING');
+}
+
+function saveNote(auditId) {
+  const title = document.getElementById('note-title').value.trim();
+  if (!title) { toast('Title required','error'); return; }
+  const type = document.getElementById('note-type').value;
+  const audit = DB.audits.find(a => a.sk === auditId);
+  const existingRefs = DB.notes.filter(n => n.auditId === auditId && n.type === type);
+  const ref = type === 'NOTE' ? `WN-${String(existingRefs.length + 1).padStart(3,'0')}` : `F-${String(existingRefs.length + 1).padStart(3,'0')}`;
+  const note = {
+    sk: `${auditId}#${ref}`, auditId, ref, type, title,
+    reviewStatus: 'Draft', independentReviewNeeded: document.getElementById('note-indep').value === 'true',
+    isSharedWithAuditee: false, comments: [], version: 1,
+  };
+  if (type === 'FINDING') {
+    Object.assign(note, {
+      severity: document.getElementById('note-sev').value,
+      category: document.getElementById('note-cat').value,
+      condition: document.getElementById('note-condition').value,
+      criteria: document.getElementById('note-criteria').value,
+      cause: document.getElementById('note-cause').value,
+      effect: document.getElementById('note-effect').value,
+      recommendation: document.getElementById('note-rec').value,
+      actionOwner: document.getElementById('note-owner').value,
+      targetDate: document.getElementById('note-target').value,
+    });
+  }
+  DB.notes.push(note);
+  closeModal();
+  toast(`${ref} created in Draft`, 'success');
+  renderFieldworkNotes();
+}
+
+// ============================================================
+// DOCUMENT REQUESTS
+// ============================================================
+function renderDocReqs() {
+  document.getElementById('topbar-actions').innerHTML = `
+    <button class="btn btn-primary btn-sm" onclick="openAddDocReq()">+ New Request</button>`;
+
+  document.getElementById('main-content').innerHTML = `
+    <div class="card">
+      <div class="card-header"><div class="card-title">Document Requests (All Audits)</div></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Request ID</th><th>Audit</th><th>Title</th><th>Description</th><th>Due Date</th><th>Status</th><th>Actions</th></tr></thead>
+          <tbody>
+            ${DB.docreqs.map(d => `<tr>
+              <td><strong>${d.requestId}</strong></td>
+              <td>${d.auditId}</td>
+              <td>${d.title}</td>
+              <td class="text-muted text-sm">${d.description.substring(0, 60)}...</td>
+              <td>${fmt(d.dueDate)}</td>
+              <td>${badge(d.status)}</td>
+              <td>
+                ${d.status === 'Submitted' ? `<button class="btn btn-success btn-xs" onclick="updateDocReq('${d.sk}','Accepted')">Accept</button> <button class="btn btn-warning btn-xs" onclick="returnDocReq('${d.sk}')">Return</button>` : ''}
+                ${d.status === 'Accepted' ? '<span class="text-muted text-sm">Completed</span>' : ''}
+                ${d.status === 'Requested' ? `<button class="btn btn-info btn-xs" onclick="updateDocReq('${d.sk}','Submitted')">Mark Submitted</button>` : ''}
+                ${d.status === 'Returned' ? `<div class="text-sm" style="color:var(--danger)">${d.returnReason}</div>` : ''}
+              </td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+
+  document.getElementById('badge-docreqs').textContent = DB.docreqs.filter(d => d.status === 'Submitted').length || '';
+}
+
+function updateDocReq(sk, newStatus) {
+  const d = DB.docreqs.find(x => x.sk === sk);
+  d.status = newStatus;
+  d.version++;
+  toast(`Document request ${newStatus.toLowerCase()}`, 'success');
+  renderDocReqs();
+}
+
+function returnDocReq(sk) {
+  const d = DB.docreqs.find(x => x.sk === sk);
+  const reason = prompt('Return reason (required):');
+  if (!reason) return;
+  d.status = 'Returned';
+  d.returnReason = reason;
+  d.version++;
+  toast('Document request returned to auditee', 'info');
+  renderDocReqs();
+}
+
+function openAddDocReq() {
+  modal('New Document Request', `
+    <div class="form-group">
+      <label>Audit</label>
+      <select id="dr-audit">${DB.audits.map(a => `<option value="${a.sk}">${a.sk} — ${a.title}</option>`).join('')}</select>
+    </div>
+    <div class="form-group"><label>Title</label><input type="text" id="dr-title" placeholder="e.g. Vendor Contracts List"></div>
+    <div class="form-group"><label>Description</label><textarea id="dr-desc" placeholder="Describe what documents are needed..."></textarea></div>
+    <div class="form-group"><label>Due Date</label><input type="date" id="dr-due"></div>`,
+    `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+     <button class="btn btn-primary" onclick="saveDocReq()">Send Request</button>`);
+}
+
+function saveDocReq() {
+  const auditId = document.getElementById('dr-audit').value;
+  const title = document.getElementById('dr-title').value.trim();
+  if (!title) { toast('Title required','error'); return; }
+  const existing = DB.docreqs.filter(d => d.auditId === auditId);
+  const n = existing.length + 1;
+  const reqId = `DRL-${String(n).padStart(3,'0')}`;
+  DB.docreqs.push({
+    sk: `${auditId}__${reqId}`, auditId, requestId: reqId, title,
+    description: document.getElementById('dr-desc').value,
+    dueDate: document.getElementById('dr-due').value,
+    status: 'Requested', attachedFiles: [], version: 1,
+  });
+  closeModal();
+  toast(`${reqId} sent to auditee`, 'success');
+  renderDocReqs();
+}
+
+// ============================================================
+// STAGE 5: REPORTING
+// ============================================================
+function renderReporting() {
+  document.getElementById('main-content').innerHTML = `
+    <div class="alert alert-info">
+      <span>ℹ️</span>
+      <div><strong>Stage 5: Reporting</strong> — Assemble final report from cleared findings. Approval flow: Draft → Lead Review → CAE Approval → Final (PDF locked in S3).</div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">Audit Reports</div></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Audit Ref</th><th>Title</th><th>Report Ref</th><th>Overall Rating</th><th>Report Status</th><th>Report Date</th><th>Actions</th></tr></thead>
+          <tbody>
+            ${DB.audits.filter(a => a.status !== 'Cancelled' && a.status !== 'Planned').map(a => {
+              const r = a.report;
+              return `<tr>
+                <td><strong>${a.sk}</strong></td>
+                <td>${a.title}</td>
+                <td>${r.reportRef || '<span class="text-muted">—</span>'}</td>
+                <td>${r.overallRating ? badge(r.overallRating) : '—'}</td>
+                <td>${badge(r.status)}</td>
+                <td>${fmt(r.reportDate)}</td>
+                <td>
+                  <button class="btn btn-secondary btn-xs" onclick="openReport('${a.sk}')">Open Report</button>
+                </td>
+              </tr>`;}).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+function openReport(sk) {
+  const a = DB.audits.find(x => x.sk === sk);
+  const r = a.report;
+  const cleared = DB.notes.filter(n => n.auditId === sk && n.type === 'FINDING' && n.reviewStatus === 'Cleared');
+  const rStatusFlow = ['Draft', 'For engagement lead approval', 'For CAE approval', 'Final - approved by CAE'];
+  const curIdx = rStatusFlow.indexOf(r.status);
+
+  modal(`Report — ${r.reportRef || a.sk}`, `
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab(this,'rpt-summary')">Summary</button>
+      <button class="tab-btn" onclick="switchTab(this,'rpt-findings')">Findings (${cleared.length})</button>
+      <button class="tab-btn" onclick="switchTab(this,'rpt-approval')">Approval</button>
+    </div>
+    <div id="rpt-summary" class="tab-panel active">
+      <div class="form-row mb-4">
+        <div class="form-group">
+          <label>Report Reference</label>
+          <input type="text" value="${r.reportRef || ''}" id="rpt-ref" placeholder="IA-YYYY-NNN-RPT">
+        </div>
+        <div class="form-group">
+          <label>Overall Rating</label>
+          <select id="rpt-rating">
+            <option ${r.overallRating === 'Satisfactory' ? 'selected':''}>Satisfactory</option>
+            <option ${r.overallRating === 'Needs improvement' ? 'selected':''}>Needs improvement</option>
+            <option ${r.overallRating === 'Unsatisfactory' ? 'selected':''}>Unsatisfactory</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Report Date</label>
+          <input type="date" id="rpt-date" value="${r.reportDate || ''}">
+        </div>
+      </div>
+      <div class="form-group"><label>Executive Summary</label><textarea id="rpt-exec" rows="4">${r.executiveSummary || ''}</textarea></div>
+    </div>
+    <div id="rpt-findings" class="tab-panel">
+      <div class="card">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Ref</th><th>Title</th><th>Severity</th><th>Status</th></tr></thead>
+            <tbody>
+              ${cleared.length > 0 ? cleared.map(f => `<tr>
+                <td>${f.ref}</td><td>${f.title}</td><td>${badge(f.severity)}</td><td>${badge(f.reviewStatus)}</td>
+              </tr>`).join('') : '<tr><td colspan="4" class="text-muted" style="text-align:center;padding:20px">No cleared findings yet</td></tr>'}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+    <div id="rpt-approval" class="tab-panel">
+      <div class="workflow-steps mb-4">
+        ${rStatusFlow.map((s,i) => `
+          <div class="wf-step">
+            <div class="wf-step-circle ${i < curIdx ? 'done' : i === curIdx ? 'active' : ''}">${i+1}</div>
+            <div class="wf-step-label">${s.replace('For engagement lead approval','Lead Review').replace('For CAE approval','CAE Approval').replace('Final - approved by CAE','Final')}</div>
+          </div>
+          ${i < rStatusFlow.length-1 ? `<div class="wf-connector ${i < curIdx ? 'done' : ''}"></div>` : ''}`).join('')}
+      </div>
+      <div class="flex gap-2">
+        ${curIdx < rStatusFlow.length - 1 ? `
+          <button class="btn btn-success" onclick="advanceReport('${sk}')">
+            Advance to: ${rStatusFlow[curIdx+1]}
+          </button>` : '<div class="alert alert-success" style="flex:1"><span>✅</span> Report is Final and Approved</div>'}
+        ${curIdx > 0 && curIdx < rStatusFlow.length - 1 ? `<button class="btn btn-danger" onclick="returnReport('${sk}')">Return with Comment</button>` : ''}
+      </div>
+    </div>`,
+    `<button class="btn btn-secondary" onclick="closeModal()">Close</button>
+     <button class="btn btn-primary" onclick="saveReport('${sk}')">Save Report</button>`,
+    'modal-lg');
+}
+
+function saveReport(sk) {
+  const a = DB.audits.find(x => x.sk === sk);
+  a.report.reportRef = document.getElementById('rpt-ref').value;
+  a.report.overallRating = document.getElementById('rpt-rating').value;
+  a.report.reportDate = document.getElementById('rpt-date').value;
+  a.report.executiveSummary = document.getElementById('rpt-exec').value;
+  toast('Report saved', 'success');
+}
+
+function advanceReport(sk) {
+  const a = DB.audits.find(x => x.sk === sk);
+  const flow = ['Draft', 'For engagement lead approval', 'For CAE approval', 'Final - approved by CAE'];
+  const idx = flow.indexOf(a.report.status);
+  if (idx < flow.length - 1) {
+    a.report.status = flow[idx + 1];
+    if (a.report.status === 'Final - approved by CAE') {
+      a.status = 'Closed';
+      toast('Report approved by CAE! Issues auto-generated for all findings.', 'success');
+      autoGenerateIssues(sk);
+    } else {
+      toast(`Report advanced to: ${a.report.status}`, 'success');
+    }
+  }
+  closeModal();
+  renderReporting();
+}
+
+function returnReport(sk) {
+  const reason = prompt('Return comment (required):');
+  if (!reason) return;
+  toast('Report returned for revision', 'info');
+  closeModal();
+}
+
+function autoGenerateIssues(sk) {
+  const a = DB.audits.find(x => x.sk === sk);
+  const findings = DB.notes.filter(n => n.auditId === sk && n.type === 'FINDING' && n.reviewStatus === 'Cleared');
+  findings.forEach(f => {
+    const issueRef = `${sk}-${f.ref}`;
+    if (!DB.issues.find(i => i.sk === issueRef)) {
+      DB.issues.push({
+        sk: issueRef, auditId: sk, findingId: f.ref, dept: 'IT', status: 'Open',
+        owner: f.actionOwner || 'USR-001', monitoringAuditor: a.team.lead.auditorId,
+        engagementLead: a.team.lead.auditorId, severity: f.severity,
+        originalTargetDate: f.targetDate, currentTargetDate: f.targetDate,
+        extensionCount: 0, percentComplete: 0,
+        findingSnapshot: { condition: f.condition, recommendation: f.recommendation },
+        closureFlow: { currentStep: 0, outcome: 'Pending' }, closedAt: null, version: 1,
+      });
+    }
+  });
+  document.getElementById('badge-issues').textContent = DB.issues.filter(i => i.status !== 'Closed').length;
+}
+
+// ============================================================
+// STAGE 6: ISSUES & REMEDIATION
+// ============================================================
+function renderIssues() {
+  document.getElementById('topbar-actions').innerHTML = `
+    <select id="iss-filter" onchange="filterIssues()" style="font-size:13px;padding:6px 10px;border-radius:6px;border:1px solid var(--border)">
+      <option value="">All Statuses</option>
+      <option>Open</option><option>In progress</option><option>For auditee head approval</option>
+      <option>For auditor review</option><option>For engagement lead approval</option>
+      <option>Under independent review</option><option>Closed</option>
+    </select>`;
+
+  const open = DB.issues.filter(i => i.status !== 'Closed').length;
+  document.getElementById('badge-issues').textContent = open || '';
+
+  document.getElementById('main-content').innerHTML = `
+    <div class="alert alert-info">
+      <span>ℹ️</span>
+      <div><strong>Stage 6: Remediation — 4-Tier Closure</strong>: Owner Submit → Auditee Head Approve → Reviewing Auditor Endorse → Lead Approve → Closed. One-time contest path to Independent Review.</div>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="card-title">Issues Tracker (${DB.issues.length} total)</div></div>
+      <div class="table-wrap" id="issues-table-wrap">${issuesTableRows(DB.issues)}</div>
+    </div>`;
+}
+
+function issuesTableRows(list) {
+  return `<table>
+    <thead><tr><th>Issue Ref</th><th>Finding (Snapshot)</th><th>Dept</th><th>Severity</th><th>Owner</th><th>Target Date</th><th>Progress</th><th>Status</th><th>Closure Step</th><th>Actions</th></tr></thead>
+    <tbody>
+      ${list.map(i => `<tr>
+        <td><strong>${i.sk}</strong></td>
+        <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${i.findingSnapshot.condition}</td>
+        <td>${i.dept}</td>
+        <td>${badge(i.severity)}</td>
+        <td>${userName(i.owner)}</td>
+        <td>${fmt(i.currentTargetDate)}</td>
+        <td style="min-width:100px">
+          <div class="progress-bar"><div class="progress-fill" style="width:${i.percentComplete}%"></div></div>
+          <div class="text-sm text-muted">${i.percentComplete}%</div>
+        </td>
+        <td>${badge(i.status)}</td>
+        <td>${i.closureFlow.currentStep > 0 ? `Step ${i.closureFlow.currentStep}/4` : '—'}</td>
+        <td>
+          <button class="btn btn-secondary btn-xs" onclick="openIssueDetail('${i.sk}')">Manage</button>
+        </td>
+      </tr>`).join('')}
+    </tbody>
+  </table>`;
+}
+
+function filterIssues() {
+  const val = document.getElementById('iss-filter').value;
+  const list = val ? DB.issues.filter(i => i.status === val) : DB.issues;
+  document.getElementById('issues-table-wrap').innerHTML = issuesTableRows(list);
+}
+
+function openIssueDetail(sk) {
+  const i = DB.issues.find(x => x.sk === sk);
+  if (!i) return;
+  const stepLabels = ['Not submitted', 'Auditee Head Approval', 'Auditor Endorsement', 'Lead Approval', 'Independent Review'];
+  const closureSteps = [
+    { num: 1, label: 'Auditee Head', decision: i.closureFlow.headApproval },
+    { num: 2, label: 'Reviewing Auditor', decision: i.closureFlow.auditorEndorsement },
+    { num: 3, label: 'Engagement Lead', decision: i.closureFlow.leadApproval },
+    { num: 4, label: 'Independent Review', decision: i.closureFlow.independentReview },
+  ];
+
+  modal(`Issue — ${i.sk}`, `
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab(this,'iss-detail')">Details</button>
+      <button class="tab-btn" onclick="switchTab(this,'iss-closure')">Closure (4-Tier)</button>
+      <button class="tab-btn" onclick="switchTab(this,'iss-requests')">Requests</button>
+    </div>
+    <div id="iss-detail" class="tab-panel active">
+      <div class="grid-2 mb-4">
+        <div><label>Severity</label>${badge(i.severity)}</div>
+        <div><label>Status</label>${badge(i.status)}</div>
+        <div><label>Owner</label>${userName(i.owner)}</div>
+        <div><label>Dept</label>${i.dept}</div>
+        <div><label>Original Target</label>${fmt(i.originalTargetDate)}</div>
+        <div><label>Current Target</label>${fmt(i.currentTargetDate)} ${i.extensionCount > 0 ? `<span class="badge badge-warning">+${i.extensionCount} ext.</span>` : ''}</div>
+        <div><label>Monitoring Auditor</label>${userName(i.monitoringAuditor)}</div>
+        <div><label>Engagement Lead</label>${userName(i.engagementLead)}</div>
+      </div>
+      <div class="divider"></div>
+      <div class="form-group"><label>Finding Condition</label><div style="background:var(--bg);padding:10px;border-radius:6px">${i.findingSnapshot.condition}</div></div>
+      <div class="form-group"><label>Recommendation</label><div style="background:var(--bg);padding:10px;border-radius:6px">${i.findingSnapshot.recommendation}</div></div>
+      <div class="form-group">
+        <label>Progress Update (%)</label>
+        <input type="range" min="0" max="100" value="${i.percentComplete}" id="iss-progress" oninput="document.getElementById('iss-pct-val').textContent=this.value+'%'" style="width:100%">
+        <span id="iss-pct-val">${i.percentComplete}%</span>
+      </div>
+      <button class="btn btn-primary btn-sm mt-4" onclick="updateProgress('${sk}')">Update Progress</button>
+    </div>
+    <div id="iss-closure" class="tab-panel">
+      <div class="workflow-steps mb-4">
+        ${closureSteps.map((s,idx) => `
+          <div class="wf-step">
+            <div class="wf-step-circle ${s.num < i.closureFlow.currentStep ? 'done' : s.num === i.closureFlow.currentStep ? 'active' : ''}">${s.num}</div>
+            <div class="wf-step-label">${s.label}</div>
+          </div>
+          ${idx < closureSteps.length-1 ? `<div class="wf-connector ${s.num < i.closureFlow.currentStep ? 'done' : ''}"></div>` : ''}`).join('')}
+      </div>
+      ${i.status === 'Open' || i.status === 'In progress' ? `
+        <div class="card"><div class="card-body">
+          <strong>Submit for Closure</strong>
+          <div class="form-group mt-4"><label>Submission Summary</label><textarea id="closure-summary" placeholder="Describe remediation actions taken..."></textarea></div>
+          <div class="form-group"><label>Closure Artifacts (min. 1 required)</label>
+            <div style="background:var(--bg);border:1px dashed var(--border);border-radius:6px;padding:16px;text-align:center;cursor:pointer" onclick="toast('File upload via pre-signed S3 URL (simulated)','info')">
+              📎 Click to upload supporting evidence
+            </div>
+            <div class="text-sm text-muted mt-2">Simulated: file would be uploaded to S3 evidence bucket</div>
+          </div>
+          <button class="btn btn-primary mt-4" onclick="submitClosure('${sk}')">Submit Closure for Review</button>
+        </div></div>` : `
+        <div>
+          ${closureSteps.map(s => s.decision ? `
+            <div style="border:1px solid var(--border);border-radius:6px;padding:12px;margin-bottom:8px">
+              <strong>Step ${s.num}: ${s.label}</strong>
+              <div class="mt-4">${badge(Object.values(s.decision)[0])}</div>
+              ${s.decision.comment ? `<div class="text-muted text-sm mt-4">Comment: ${s.decision.comment}</div>` : ''}
+            </div>` : '').join('')}
+          ${i.closureFlow.currentStep > 0 && i.closureFlow.currentStep <= 3 ? `
+            <div class="flex gap-2 mt-4">
+              <button class="btn btn-success btn-sm" onclick="advanceClosure('${sk}')">Approve / Endorse (Step ${i.closureFlow.currentStep})</button>
+              <button class="btn btn-danger btn-sm" onclick="returnClosure('${sk}')">Return</button>
+            </div>` : ''}
+          ${i.status === 'Closed' ? '<div class="alert alert-success"><span>✅</span> Issue Closed</div>' : ''}
+        </div>`}
+    </div>
+    <div id="iss-requests" class="tab-panel">
+      <div class="flex gap-2 mb-4" style="justify-content:flex-end">
+        <button class="btn btn-warning btn-sm" onclick="openExtensionRequest('${sk}')">Request Extension</button>
+        <button class="btn btn-info btn-sm" onclick="openReassignRequest('${sk}')">Request Reassignment</button>
+      </div>
+      ${i.requests && i.requests.length > 0 ? i.requests.map(r => `
+        <div style="border:1px solid var(--border);border-radius:6px;padding:12px;margin-bottom:8px">
+          <div class="flex gap-2" style="justify-content:space-between">
+            <strong>${r.type}</strong>${badge(r.status)}
+          </div>
+          <div class="text-sm text-muted mt-4">Reason: ${r.reason}</div>
+          ${r.type === 'EXTENSION' ? `<div class="text-sm text-muted">Proposed Date: ${fmt(r.proposedTargetDate)}</div>` : ''}
+          ${r.status === 'Pending' ? `<div class="flex gap-2 mt-4">
+            <button class="btn btn-success btn-xs" onclick="decideRequest('${sk}','${r.requestId}','Approved')">Approve</button>
+            <button class="btn btn-danger btn-xs" onclick="decideRequest('${sk}','${r.requestId}','Rejected')">Reject</button>
+          </div>` : ''}
+        </div>`).join('') : '<div class="text-muted text-sm">No requests submitted.</div>'}
+    </div>`,
+    `<button class="btn btn-secondary" onclick="closeModal()">Close</button>`,
+    'modal-lg');
+}
+
+function updateProgress(sk) {
+  const i = DB.issues.find(x => x.sk === sk);
+  i.percentComplete = parseInt(document.getElementById('iss-progress').value);
+  if (i.percentComplete > 0 && i.status === 'Open') i.status = 'In progress';
+  i.version++;
+  toast('Progress updated', 'success');
+  closeModal();
+  renderIssues();
+}
+
+function submitClosure(sk) {
+  const summary = document.getElementById('closure-summary').value.trim();
+  if (!summary) { toast('Submission summary required','error'); return; }
+  const i = DB.issues.find(x => x.sk === sk);
+  i.closureFlow.submissionSummary = summary;
+  i.closureFlow.closureArtifactFileKeys = ['evidence/simulated/closure-artifact.pdf'];
+  i.closureFlow.currentStep = 1;
+  i.status = 'For auditee head approval';
+  i.percentComplete = 100;
+  i.version++;
+  toast('Closure submitted — awaiting Auditee Head approval', 'success');
+  closeModal();
+  renderIssues();
+}
+
+function advanceClosure(sk) {
+  const i = DB.issues.find(x => x.sk === sk);
+  const cf = i.closureFlow;
+  if (cf.currentStep === 1) {
+    cf.headApproval = { decision: 'Approved', comment: 'Verified and approved.', decidedBy: DB.currentUser.id, date: new Date().toISOString() };
+    cf.currentStep = 2;
+    i.status = 'For auditor review';
+  } else if (cf.currentStep === 2) {
+    cf.auditorEndorsement = { decision: 'Endorsed', comment: 'Evidence validated.', decidedBy: DB.currentUser.id, date: new Date().toISOString() };
+    cf.currentStep = 3;
+    i.status = 'For engagement lead approval';
+  } else if (cf.currentStep === 3) {
+    cf.leadApproval = { decision: 'Approved', comment: 'Issue closed.', decidedBy: DB.currentUser.id, date: new Date().toISOString() };
+    cf.currentStep = 4;
+    i.status = 'Closed';
+    i.closedAt = new Date().toISOString();
+    i.closedBy = DB.currentUser.id;
+    cf.outcome = 'Approved';
+  }
+  i.version++;
+  toast(`Closure step advanced — status: ${i.status}`, 'success');
+  closeModal();
+  renderIssues();
+}
+
+function returnClosure(sk) {
+  const reason = prompt('Return comment (required):');
+  if (!reason) return;
+  const i = DB.issues.find(x => x.sk === sk);
+  i.status = 'In progress';
+  i.closureFlow.currentStep = 0;
+  i.version++;
+  toast('Closure returned to owner', 'info');
+  closeModal();
+  renderIssues();
+}
+
+function openExtensionRequest(sk) {
+  closeModal();
+  setTimeout(() => modal(`Extension Request — ${sk}`, `
+    <div class="form-group"><label>Proposed New Target Date</label><input type="date" id="ext-date"></div>
+    <div class="form-group"><label>Reason</label><textarea id="ext-reason" placeholder="Explain why extension is needed..."></textarea></div>`,
+    `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+     <button class="btn btn-warning" onclick="saveExtReq('${sk}')">Submit Extension Request</button>`), 50);
+}
+
+function saveExtReq(sk) {
+  const reason = document.getElementById('ext-reason').value.trim();
+  if (!reason) { toast('Reason required','error'); return; }
+  const i = DB.issues.find(x => x.sk === sk);
+  if (!i.requests) i.requests = [];
+  i.requests.push({ requestId: 'REQ-' + Date.now(), type: 'EXTENSION', proposedTargetDate: document.getElementById('ext-date').value, reason, status: 'Pending' });
+  closeModal();
+  toast('Extension request submitted for approval', 'success');
+  renderIssues();
+}
+
+function openReassignRequest(sk) {
+  closeModal();
+  setTimeout(() => modal(`Reassignment Request — ${sk}`, `
+    <div class="form-group">
+      <label>Proposed New Owner</label>
+      <select id="rea-owner">${DB.users.filter(u => u.id.startsWith('USR')).map(u => `<option value="${u.id}">${u.fullName} (${u.department})</option>`).join('')}</select>
+    </div>
+    <div class="form-group"><label>Reason</label><textarea id="rea-reason" placeholder="Explain why reassignment is needed..."></textarea></div>`,
+    `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+     <button class="btn btn-info" onclick="saveReaReq('${sk}')">Submit Reassignment Request</button>`), 50);
+}
+
+function saveReaReq(sk) {
+  const reason = document.getElementById('rea-reason').value.trim();
+  if (!reason) { toast('Reason required','error'); return; }
+  const i = DB.issues.find(x => x.sk === sk);
+  if (!i.requests) i.requests = [];
+  i.requests.push({ requestId: 'REQ-' + Date.now(), type: 'REASSIGNMENT', proposedOwner: document.getElementById('rea-owner').value, reason, status: 'Pending' });
+  closeModal();
+  toast('Reassignment request submitted for approval', 'success');
+  renderIssues();
+}
+
+function decideRequest(sk, reqId, decision) {
+  const i = DB.issues.find(x => x.sk === sk);
+  const req = i.requests.find(r => r.requestId === reqId);
+  req.status = decision;
+  req.decidedBy = DB.currentUser.id;
+  req.decidedAt = new Date().toISOString();
+  if (decision === 'Approved' && req.type === 'EXTENSION') {
+    i.currentTargetDate = req.proposedTargetDate;
+    i.extensionCount++;
+  }
+  if (decision === 'Approved' && req.type === 'REASSIGNMENT') {
+    i.owner = req.proposedOwner;
+  }
+  toast(`Request ${decision.toLowerCase()}`, decision === 'Approved' ? 'success' : 'info');
+  closeModal();
+  renderIssues();
+}
+
+// ============================================================
+// IAM — USERS & ROLES
+// ============================================================
+function renderIAM() {
+  document.getElementById('topbar-actions').innerHTML = `
+    <button class="btn btn-primary btn-sm" onclick="openInviteUser()">+ Invite User</button>`;
+
+  document.getElementById('main-content').innerHTML = `
+    <div class="card">
+      <div class="card-header"><div class="card-title">Users & Roles (${DB.users.length})</div></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>User ID</th><th>Full Name</th><th>Email</th><th>Department</th><th>Assigned Roles</th><th>Invitation Status</th><th>Actions</th></tr></thead>
+          <tbody>
+            ${DB.users.map(u => `<tr>
+              <td><strong>${u.id}</strong></td>
+              <td>${u.fullName}</td>
+              <td>${u.email}</td>
+              <td>${u.department}</td>
+              <td>${u.assignedRoles.map(r => `<span class="chip">${r.replace('role:','')}</span>`).join(' ')}</td>
+              <td>${badge(u.invitation.status)}</td>
+              <td>
+                ${u.invitation.status !== 'Active' ? `<button class="btn btn-info btn-xs" onclick="activateUser('${u.id}')">Activate</button>` : '<span class="text-muted text-sm">Active</span>'}
+                <button class="btn btn-secondary btn-xs" onclick="editUserRole('${u.id}')">Roles</button>
+              </td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card mt-4">
+      <div class="card-header"><div class="card-title">Role Definitions</div></div>
+      <div class="card-body">
+        <div class="grid-2">
+          ${DB.roles.map(r => `<div style="padding:10px;border:1px solid var(--border);border-radius:6px">
+            <strong style="font-size:13px">${r.label}</strong>
+            <div class="text-sm text-muted">${r.id}</div>
+          </div>`).join('')}
+        </div>
+      </div>
+    </div>`;
+}
+
+function openInviteUser() {
+  modal('Invite New User', `
+    <div class="form-row">
+      <div class="form-group"><label>Full Name</label><input type="text" id="inv-name" placeholder="Juan dela Cruz"></div>
+      <div class="form-group"><label>Email</label><input type="email" id="inv-email" placeholder="user@company.com"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>User Type</label>
+        <select id="inv-type" onchange="updateInvPrefix()">
+          <option value="AUDR">Auditor (AUDR)</option>
+          <option value="USR">Auditee (USR)</option>
+          <option value="SIG">Signatory (SIG)</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Department</label><input type="text" id="inv-dept" placeholder="e.g. Finance"></div>
+    </div>
+    <div class="form-group">
+      <label>Assigned Role</label>
+      <select id="inv-role">
+        ${DB.roles.map(r => `<option value="role:${r.id}">${r.label}</option>`).join('')}
+      </select>
+    </div>`,
+    `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+     <button class="btn btn-primary" onclick="saveInviteUser()">Send Invitation</button>`);
+}
+
+function saveInviteUser() {
+  const name = document.getElementById('inv-name').value.trim();
+  const email = document.getElementById('inv-email').value.trim();
+  if (!name || !email) { toast('Name and email required','error'); return; }
+  const prefix = document.getElementById('inv-type').value;
+  const existing = DB.users.filter(u => u.id.startsWith(prefix));
+  const id = `${prefix}-${String(existing.length + 1).padStart(3,'0')}`;
+  DB.users.push({
+    id, fullName: name, email,
+    department: document.getElementById('inv-dept').value,
+    assignedRoles: [document.getElementById('inv-role').value],
+    invitation: { status: 'Invited', expiresAt: new Date(Date.now() + 7*86400000).toISOString() },
+  });
+  DB.trail.unshift({ sk: new Date().toISOString()+'#'+Math.random().toString(36).substr(2,6), auditId: '_iam', action: 'Create', entityRef: id, performedBy: DB.currentUser.id, roles: [DB.currentUser.role], details: { action: 'User invited', email }, timestamp: new Date().toISOString() });
+  closeModal();
+  toast(`Invitation sent to ${email}`, 'success');
+  renderIAM();
+}
+
+function activateUser(id) {
+  const u = DB.users.find(x => x.id === id);
+  u.invitation.status = 'Active';
+  toast(`${u.fullName} activated`, 'success');
+  renderIAM();
+}
+
+function editUserRole(id) {
+  const u = DB.users.find(x => x.id === id);
+  modal(`Edit Roles — ${u.fullName}`, `
+    <div class="form-group">
+      <label>Current Roles</label>
+      <div>${u.assignedRoles.map(r => `<span class="chip">${r.replace('role:','')}</span>`).join(' ')}</div>
+    </div>
+    <div class="form-group">
+      <label>Add Role</label>
+      <select id="new-role">${DB.roles.map(r => `<option value="role:${r.id}">${r.label}</option>`).join('')}</select>
+    </div>`,
+    `<button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+     <button class="btn btn-primary" onclick="addRole('${id}')">Add Role</button>`);
+}
+
+function addRole(id) {
+  const u = DB.users.find(x => x.id === id);
+  const role = document.getElementById('new-role').value;
+  if (!u.assignedRoles.includes(role)) u.assignedRoles.push(role);
+  closeModal();
+  toast('Role added', 'success');
+  renderIAM();
+}
+
+// ============================================================
+// AUDIT TRAIL
+// ============================================================
+function renderTrail() {
+  document.getElementById('main-content').innerHTML = `
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">Tamper-Proof Audit Trail</div>
+        <span class="chip">🔒 All entries are immutable once written</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Timestamp</th><th>Audit</th><th>Action</th><th>Entity Ref</th><th>Performed By</th><th>Roles</th><th>Details</th></tr></thead>
+          <tbody>
+            ${DB.trail.map(t => `<tr>
+              <td class="text-sm">${t.timestamp ? new Date(t.timestamp).toLocaleString('en-PH') : '—'}</td>
+              <td><span class="chip">${t.auditId}</span></td>
+              <td><span class="chip">${t.action}</span></td>
+              <td><strong>${t.entityRef}</strong></td>
+              <td>${userName(t.performedBy)}</td>
+              <td>${t.roles.map(r => `<span class="chip">${r.replace('role:','')}</span>`).join(' ')}</td>
+              <td class="text-sm text-muted">${Object.entries(t.details || {}).map(([k,v]) => `${k}: ${v}`).join(' | ')}</td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+// ============================================================
+// INIT
+// ============================================================
+function viewAuditDetail(sk) {
+  openCockpit(sk);
+}
+
+function init() {
+  // Set user info in sidebar
+  const u = DB.currentUser;
+  document.getElementById('user-name').textContent = DB.users.find(x => x.id === 'AUDR-001')?.fullName || 'User';
+  document.getElementById('user-role').textContent = 'Chief Audit Executive';
+  document.getElementById('user-avatar').textContent = 'MS';
+
+  // Update badges
+  document.getElementById('badge-issues').textContent = DB.issues.filter(i => i.status !== 'Closed').length;
+  document.getElementById('badge-docreqs').textContent = DB.docreqs.filter(d => d.status === 'Submitted').length;
+
+  navigate('dashboard');
+}
+
+init();
+</script>
+</body>
+</html>
